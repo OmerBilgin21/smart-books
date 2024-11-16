@@ -90,3 +90,13 @@ export class BooksService {
       throw new Error(`Error while getting books:\n ${getBooksError}`);
     }
   }
+
+  public async getVolume(url: string): Promise<Book> {
+    try {
+      const directRequestResponse: AxiosResponse<Book> = await axios.get(url);
+      return directRequestResponse.data;
+    } catch (getBookError) {
+      throw new Error(`Error while getting book: ${getBookError}`);
+    }
+  }
+}
