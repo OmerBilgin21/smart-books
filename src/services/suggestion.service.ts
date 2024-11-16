@@ -15,6 +15,29 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+
+  private combineParams(
+    paramOne: string[],
+    paramTwo: string[],
+  ): SearchObject[][] {
+    const combinations: SearchObject[][] = [];
+
+    for (const category of paramOne) {
+      for (const author of paramTwo) {
+        const authorQuery: SearchObject = {
+          term: 'authors',
+          value: author,
+        };
+        const categoryQuery: SearchObject = {
+          term: 'subject',
+          value: category,
+        };
+        combinations.push([authorQuery, categoryQuery]);
+      }
+    }
+    return combinations;
+  }
+
   private async getChunkedBooks(queries: SearchObject[][]): Promise<Book[]> {
     const bookPromises: Promise<SuccessfulGoogleResponse[]>[] = [];
     for (const query of queries) {
