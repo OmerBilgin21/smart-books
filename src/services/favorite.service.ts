@@ -31,3 +31,23 @@ export class FavoriteService {
     }
   }
 
+  public async get(id: string): Promise<Favorite> {
+    try {
+      const properId = Number(id);
+
+      if (!Number.isFinite(properId)) {
+        throw new Error('Invalid ID');
+      }
+
+      const found = await this.db.select('*').where({ id: properId }).first();
+
+      if (!found) {
+        throw new Error('Favorite not found');
+      }
+
+      return favoriteTransform.parse(found);
+    } catch (getFavoriteError) {
+      throw new Error(`Error while getting favorites: ${getFavoriteError}`);
+    }
+  }
+
