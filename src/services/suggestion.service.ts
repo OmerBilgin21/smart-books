@@ -15,6 +15,78 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+  public async generateSuggestionsForUser(
+    userId: string | number,
+  ): Promise<SuggestionResult> {
+    try {
+      const favoritesOfUser = await this.favoriteService.userFavorites(userId);
+      if (!favoritesOfUser || !favoritesOfUser.length) {
+        console.warn(
+          'Can not generate suggestions for a user that does not have any favorites.',
+        );
+        return {
+          relevance: Relevance.NO_SUGGESTION,
+          books: [],
+        };
+      }
+      const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
+        return this.bookService.getVolume(favorite.selfLink);
+      });
+
+      const favoriteBooks = await Promise.all(bookPromises);
+      const favoriteAuthors = favoriteBooks.flatMap(
+        (book): string[] => book.volumeInfo.authors,
+      );
+      const favoriteCategories = favoriteBooks.flatMap((book): string[] =>
+        book.volumeInfo.categories.map((category): string => {
+          return category;
+        }),
+      );
+      const favoritePublishers = favoriteBooks
+        .map((book): string | undefined | null => book.volumeInfo?.publisher)
+        .filter((book): book is string => book !== undefined || book !== null);
+
+      const categoryAuthorCombination = await this.getAuthorCategoryCombination(
+        favoriteCategories,
+        favoriteAuthors,
+      );
+
+      if (categoryAuthorCombination.books.length) {
+        return categoryAuthorCombination;
+      }
+
+      const categoryOverloaded =
+        await this.progressiveCategoryOverload(favoriteCategories);
+
+      if (categoryOverloaded.books.length) {
+        return categoryOverloaded;
+      }
+
+      const authorSuggestions =
+        await this.getAuthorSuggestions(favoriteAuthors);
+
+      if (authorSuggestions.books.length) {
+        return authorSuggestions;
+      }
+
+      const publisherSuggestions =
+        await this.getPublisherSuggestions(favoritePublishers);
+
+      if (publisherSuggestions.books.length) {
+        return publisherSuggestions;
+      }
+
+      return {
+        relevance: Relevance.NO_SUGGESTION,
+        books: [],
+      };
+    } catch (generateSuggestionError) {
+      throw new Error(
+        `Error while generating suggestions for user: ${generateSuggestionError}`,
+      );
+    }
+  }
+
   private async getPublisherSuggestions(
     publishers: string[],
   ): Promise<SuggestionResult> {
