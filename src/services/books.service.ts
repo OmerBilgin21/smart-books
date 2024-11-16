@@ -33,3 +33,42 @@ export class BooksService {
     return url + `&startIndex=0&maxResults=25`;
   }
 
+  private queryBuilder(
+    searchObjects: SearchObject[],
+    categoryBase: string,
+    paginate?: Paginate,
+  ): string {
+    let finalUrl = '';
+    searchObjects.forEach((searchObject, idx): void => {
+      let addition = '';
+
+      switch (searchObject.term) {
+        case 'authors':
+          addition = `inauthor:${searchObject.value}`;
+          break;
+        case 'title':
+          addition = `intitle:${searchObject.value}`;
+          break;
+        case 'subject':
+          addition = `subject:${searchObject.value}`;
+          break;
+        case 'publisher':
+          addition = `inpublisher:${searchObject.value}`;
+          break;
+
+        default:
+          throw new Error('Invalid search term');
+      }
+
+      if (idx === 0) {
+        finalUrl = categoryBase + '?q=';
+      } else {
+        finalUrl += '+';
+      }
+
+      finalUrl += addition;
+    });
+
+    finalUrl = this.addPostfix(finalUrl, paginate);
+    return finalUrl;
+  }
