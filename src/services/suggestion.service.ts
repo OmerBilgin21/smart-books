@@ -15,6 +15,33 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+  private async progressiveCategoryOverload(
+    favoriteCategories: string[],
+  ): Promise<{ relevance: Relevance; books: Book[] }> {
+    const singulars = favoriteCategories.map(
+      (category): SearchObject => ({ term: 'subject', value: category }),
+    );
+    // if two or more categories combined returns a book, that's way more relevant
+    // than just returning a random book from a singular category
+    const combinations = this.combineParams(
+      favoriteCategories,
+      favoriteCategories,
+    );
+
+    if (combinations.length) {
+      return {
+        relevance: Relevance.VERY_GOOD,
+        books: await this.getChunkedBooks(combinations),
+      };
+    }
+
+    const lessRelevantResults = await this.queryTheWholeResult(singulars);
+    return {
+      relevance: Relevance.BAD,
+      books: this.extractBooksFromResult(lessRelevantResults),
+    };
+  }
+
   private async getAuthorCategoryCombination(
     favoriteCategories: string[],
     favoriteAuthors: string[],
