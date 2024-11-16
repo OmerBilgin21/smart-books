@@ -72,3 +72,21 @@ export class BooksService {
     finalUrl = this.addPostfix(finalUrl, paginate);
     return finalUrl;
   }
+
+  public async getVolumes(
+    search: SearchObject[],
+    paginate?: Paginate,
+  ): Promise<SuccessfulGoogleResponse> {
+    try {
+      const volumeBase = '/volumes';
+      const completeUrl = this.queryBuilder(search, volumeBase, paginate);
+
+      const books: AxiosResponse<SuccessfulGoogleResponse> =
+        await base.get(completeUrl);
+
+      return books.data;
+    } catch (getBooksError) {
+      console.error(getBooksError);
+      throw new Error(`Error while getting books:\n ${getBooksError}`);
+    }
+  }
