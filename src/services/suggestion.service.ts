@@ -15,6 +15,19 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+  private async getAuthorCategoryCombination(
+    favoriteCategories: string[],
+    favoriteAuthors: string[],
+  ): Promise<SuggestionResult> {
+    const authorCategoryCombinations = this.combineParams(
+      favoriteCategories,
+      favoriteAuthors,
+    );
+    return {
+      relevance: Relevance.PERFECT,
+      books: await this.getChunkedBooks(authorCategoryCombinations),
+    };
+  }
 
   private combineParams(
     paramOne: string[],
