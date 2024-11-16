@@ -15,6 +15,21 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+  private async getPublisherSuggestions(
+    publishers: string[],
+  ): Promise<SuggestionResult> {
+    const publisherQuery = publishers.map(
+      (publisher): SearchObject => ({
+        term: 'publisher',
+        value: publisher,
+      }),
+    );
+    const results = await this.queryTheWholeResult(publisherQuery);
+    return {
+      relevance: Relevance.VERY_BAD,
+      books: this.extractBooksFromResult(results),
+    };
+  }
 
   private async getAuthorSuggestions(
     favoriteAuthors: string[],
