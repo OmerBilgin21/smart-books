@@ -51,3 +51,38 @@ export class FavoriteService {
     }
   }
 
+  public async userFavorites(userId: string | number): Promise<Favorite[]> {
+    try {
+      const properId = Number(userId);
+      if (!Number.isFinite(properId)) {
+        throw new Error('Invalid user ID');
+      }
+
+      const foundFavorites = (await this.db
+        .select('*')
+        // TODO: Fix this
+        .where({ user_id: properId })) as unknown as FavoriteDb[];
+
+      if (!foundFavorites || !foundFavorites?.length) {
+        throw new Error('Favorite not found');
+      }
+
+      const parsedFavorites = foundFavorites
+        .map((favorite): Favorite | null => {
+          const res = favoriteTransform.safeParse(favorite);
+          if (!res.success) {
+            console.error('Broken record found: ', favorite);
+            return null;
+          }
+          return res.data;
+        })
+        .filter((e): e is Favorite => e !== null);
+
+      return parsedFavorites;
+    } catch (getUserFavoritesError) {
+      throw new Error(
+        `Error while getting user favorites: ${getUserFavoritesError}`,
+      );
+    }
+  }
+}
