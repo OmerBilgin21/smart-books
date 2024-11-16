@@ -22,7 +22,6 @@
   "author": "Omer Bilgin",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.22.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
