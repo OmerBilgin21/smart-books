@@ -15,6 +15,24 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+  private async getChunkedBooks(queries: SearchObject[][]): Promise<Book[]> {
+    const bookPromises: Promise<SuccessfulGoogleResponse[]>[] = [];
+    for (const query of queries) {
+      bookPromises.push(this.queryTheWholeResult(query));
+    }
+
+    const responseNestedArr = await Promise.all(bookPromises);
+    return responseNestedArr.flatMap((responseArr): Book[] =>
+      responseArr.flatMap((response): Book[] => response.items),
+    );
+  }
+
+  private extractBooksFromResult(results: SuccessfulGoogleResponse[]): Book[] {
+    return results.flatMap((result): Book[] =>
+      result.items.flatMap((e): Book => e),
+    );
+  }
+
   private async queryTheWholeResult(
     query: SearchObject[],
   ): Promise<SuccessfulGoogleResponse[]> {
