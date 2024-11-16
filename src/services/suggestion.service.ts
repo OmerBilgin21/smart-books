@@ -15,6 +15,23 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
   ) {}
 
+
+  private async getAuthorSuggestions(
+    favoriteAuthors: string[],
+  ): Promise<SuggestionResult> {
+    const authorQueryObj = favoriteAuthors.map(
+      (author): SearchObject => ({
+        term: 'authors',
+        value: author,
+      }),
+    );
+    const results = await this.queryTheWholeResult(authorQueryObj);
+    return {
+      relevance: Relevance.MEDIOCRE,
+      books: this.extractBooksFromResult(results),
+    };
+  }
+
   private async progressiveCategoryOverload(
     favoriteCategories: string[],
   ): Promise<{ relevance: Relevance; books: Book[] }> {
