@@ -5,7 +5,10 @@ export type SearchObject = {
   value: string;
 };
 
-export type MaturityRating = 'NOT_MATURE' | 'MATURE';
+export enum MaturityRating {
+  'NOT_MATURE' = 'NOT_MATURE',
+  'MATURE' = 'MATURE',
+}
 
 export type IndustryIdentifier = {
   type: string;

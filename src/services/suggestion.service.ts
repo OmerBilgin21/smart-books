@@ -32,6 +32,7 @@ export class SuggestionService {
   ): Promise<SuggestionResult> {
     try {
       const favoritesOfUser = await this.favoriteService.userFavorites(userId);
+
       if (!favoritesOfUser || !favoritesOfUser.length) {
         console.warn(
           'Can not generate suggestions for a user that does not have any favorites.',
@@ -41,6 +42,7 @@ export class SuggestionService {
           books: [],
         };
       }
+
       this.dislikes = await this.dislikeService.userDislikes(userId);
       this.favoriteCategories =
         await this.favoriteCategoriesService.userFavoriteCategories(userId);
@@ -292,11 +294,12 @@ export class SuggestionService {
     const initialResponse = await this.bookService.getVolumes(query);
     const promiseArr: Promise<SuccessfulGoogleResponse>[] = [];
 
-    for (let i = 0; i < limit; i += 25) {
+    const increaseAmount = 40 - limit < 0 ? 40 : limit;
+    for (let i = 0; i < limit; i += increaseAmount) {
       promiseArr.push(
         this.bookService.getVolumes(query, { start: i, limit: 1 }),
       );
-      delay(300);
+      await delay(300);
     }
 
     const resolved = await Promise.all(promiseArr);
