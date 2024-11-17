@@ -198,6 +198,7 @@ export class SuggestionService {
     }
 
     const lessRelevantResults = await this.queryTheWholeResult(singulars);
+
     return {
       relevance: Relevance.BAD,
       books: this.extractBooksFromResult(lessRelevantResults),
@@ -205,8 +206,25 @@ export class SuggestionService {
   }
 
   private async getAuthorCategoryCombination(): Promise<SuggestionResult> {
+    // in this case, both cases are near perfect suggestions
+    // so we can return them like that
+    const favoriteCategoryNames = this.favoriteCategories.map(
+      (category): string => category.name,
+    );
+    const handCraftedFavoriteAndAuthorCombinations = this.combineParams(
+      favoriteCategoryNames,
+      this.favoriteAuthors,
+    );
+    if (handCraftedFavoriteAndAuthorCombinations.length) {
+      return {
+        relevance: Relevance.PERFECT,
+        books: await this.getChunkedBooks(
+          handCraftedFavoriteAndAuthorCombinations,
+        ),
+      };
+    }
     const authorCategoryCombinations = this.combineParams(
-      this.favoriteCategories,
+      this.favoriteCategoriesFromBooks,
       this.favoriteAuthors,
     );
     return {
@@ -237,10 +255,19 @@ export class SuggestionService {
     return combinations;
   }
 
+  private getLimitDependingOnChunkSize<T>(chunks: T[][]): number {
+    return Math.ceil(50 / chunks.length);
+  }
+
   private async getChunkedBooks(queries: SearchObject[][]): Promise<Book[]> {
     const bookPromises: Promise<SuccessfulGoogleResponse[]>[] = [];
     for (const query of queries) {
-      bookPromises.push(this.queryTheWholeResult(query));
+      bookPromises.push(
+        this.queryTheWholeResult(
+          query,
+          this.getLimitDependingOnChunkSize(queries),
+        ),
+      );
     }
 
     const responseNestedArr = await Promise.all(bookPromises);
@@ -260,12 +287,12 @@ export class SuggestionService {
 
   private async queryTheWholeResult(
     query: SearchObject[],
+    limit: number = 5,
   ): Promise<SuccessfulGoogleResponse[]> {
     const initialResponse = await this.bookService.getVolumes(query);
-    const totalItems = initialResponse.totalItems;
     const promiseArr: Promise<SuccessfulGoogleResponse>[] = [];
 
-    for (let i = 0; i < totalItems; i += 25) {
+    for (let i = 0; i < limit; i += 25) {
       promiseArr.push(
         this.bookService.getVolumes(query, { start: i, limit: 1 }),
       );
