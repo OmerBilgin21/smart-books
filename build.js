@@ -21,6 +21,12 @@ esbuild
       'oracledb',
       'tedious',
       'pg-query-stream',
+      'nock',
+      'aws-sdk',
+      'mock-aws-s3',
     ],
+    loader: {
+      '.html': 'dataurl',
+    },
   })
   .catch(() => process.exit(1));
