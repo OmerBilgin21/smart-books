@@ -127,24 +127,73 @@ export class SuggestionService {
     };
   }
 
-  private async progressiveCategoryOverload(): Promise<{
-    relevance: Relevance;
-    books: Book[];
-  }> {
-    const singulars = this.favoriteCategories.map(
+  private async progressiveCategoryOverload(): Promise<SuggestionResult> {
+    // In the worst case scenario, we want to fallback to these categories
+    // that were extracted from favorite books
+    const singulars = this.favoriteCategoriesFromBooks.map(
       (category): SearchObject => ({ term: 'subject', value: category }),
     );
+
     // if two or more categories combined returns a book, that's way more relevant
     // than just returning a random book from a singular category
-    const combinations = this.combineParams(
-      this.favoriteCategories,
-      this.favoriteCategories,
+    // combination 1: Combination of favorites categories obtained from user's favorite books
+    const combinations1 = this.combineParams(
+      this.favoriteCategoriesFromBooks,
+      this.favoriteCategoriesFromBooks,
     );
 
-    if (combinations.length) {
+    // combination 2: Combination of hand created favorite categories from user
+    // We go from best to worst in terms of rank
+    const favoriteCategoryBests: string[] = [];
+    const favoriteCategoryWorsts: string[] = [];
+    this.favoriteCategories.forEach((favoriteCategory): void => {
+      if (favoriteCategory.rank >= 5) {
+        favoriteCategoryBests.push(favoriteCategory.name);
+      } else {
+        favoriteCategoryWorsts.push(favoriteCategory.name);
+      }
+    });
+    const combinations2perfects = this.combineParams(
+      favoriteCategoryBests,
+      favoriteCategoryBests,
+    );
+    const combination2Worsts = this.combineParams(
+      favoriteCategoryBests,
+      favoriteCategoryWorsts,
+    );
+
+    // in this case the mix and match is the best case with
+    // hand created favorites and read book favorites
+    // we check if that's possible first, then try to fully go with
+    // hand crafted ones if not
+    if (combinations2perfects.length) {
+      if (combinations1.length) {
+        const newCombination = [...combinations1, ...combinations2perfects];
+        return {
+          relevance: Relevance.PERFECT,
+          books: await this.getChunkedBooks(newCombination),
+        };
+      }
       return {
         relevance: Relevance.VERY_GOOD,
-        books: await this.getChunkedBooks(combinations),
+        books: await this.getChunkedBooks(combinations2perfects),
+      };
+    } else if (combination2Worsts.length) {
+      if (combinations1.length) {
+        const newCombination = [...combinations1, ...combination2Worsts];
+        return {
+          relevance: Relevance.GOOD,
+          books: await this.getChunkedBooks(newCombination),
+        };
+      }
+      return {
+        relevance: Relevance.MEDIOCRE,
+        books: await this.getChunkedBooks(combination2Worsts),
+      };
+    } else if (combinations1.length) {
+      return {
+        relevance: Relevance.MEDIOCRE,
+        books: await this.getChunkedBooks(combinations1),
       };
     }
 
