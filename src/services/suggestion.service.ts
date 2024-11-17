@@ -5,22 +5,26 @@ import {
   Relevance,
   SuggestionResult,
   Dislike,
+  FavoriteCategory,
 } from 'schemas';
 import { BooksService } from './books.service';
 import { FavoriteService } from './favorite.service';
 import { DislikeService } from './dislike.service';
 import { delay } from 'utils';
+import { FavoriteCategoriesService } from './favorite.categories.service';
 
 export class SuggestionService {
   private dislikes: Dislike[] = [];
-  private favoriteCategories: string[] = [];
+  private favoriteCategoriesFromBooks: string[] = [];
   private favoriteAuthors: string[] = [];
   private favoritePublishers: string[] = [];
+  private favoriteCategories: FavoriteCategory[] = [];
 
   constructor(
     private bookService: BooksService,
     private favoriteService: FavoriteService,
     private dislikeService: DislikeService,
+    private favoriteCategoriesService: FavoriteCategoriesService,
   ) {}
 
   public async generateSuggestionsForUser(
@@ -38,6 +42,8 @@ export class SuggestionService {
         };
       }
       this.dislikes = await this.dislikeService.userDislikes(userId);
+      this.favoriteCategories =
+        await this.favoriteCategoriesService.userFavoriteCategories(userId);
       const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
         return this.bookService.getVolume(favorite.selfLink);
       });
