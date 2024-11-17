@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import js from '@eslint/js';
 import prettier from 'eslint-plugin-prettier';
 import ests from '@typescript-eslint/eslint-plugin';
+import jestPlugin from 'eslint-plugin-jest';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,13 +45,14 @@ export default [
     },
   },
   {
-    // plugins: ['@typescript-eslint', 'prettier'],
     plugins: {
       prettier: prettier,
       typescript: ests,
+      jest: jestPlugin,
     },
   },
   ...compat.extends('eslint:recommended'),
   ...compat.extends('plugin:@typescript-eslint/recommended'),
+  ...compat.extends('plugin:prettier/recommended'),
   ...compat.extends('plugin:prettier/recommended'),
 ];

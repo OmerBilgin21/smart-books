@@ -25,7 +25,8 @@
     "./eslint.config.mjs",
     "./prettier.config.mjs",
     "./build.js",
-    "dist"
+    "dist",
+    "./babel.config.js"
   ],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
