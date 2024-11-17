@@ -4,15 +4,23 @@ import {
   SearchObject,
   Relevance,
   SuggestionResult,
+  Dislike,
 } from 'schemas';
 import { BooksService } from './books.service';
 import { FavoriteService } from './favorite.service';
+import { DislikeService } from './dislike.service';
 import { delay } from 'utils';
 
 export class SuggestionService {
+  private dislikes: Dislike[] = [];
+  private favoriteCategories: string[] = [];
+  private favoriteAuthors: string[] = [];
+  private favoritePublishers: string[] = [];
+
   constructor(
     private bookService: BooksService,
     private favoriteService: FavoriteService,
+    private dislikeService: DislikeService,
   ) {}
 
   public async generateSuggestionsForUser(
@@ -29,48 +37,44 @@ export class SuggestionService {
           books: [],
         };
       }
+      this.dislikes = await this.dislikeService.userDislikes(userId);
       const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
         return this.bookService.getVolume(favorite.selfLink);
       });
 
       const favoriteBooks = await Promise.all(bookPromises);
-      const favoriteAuthors = favoriteBooks.flatMap(
+      this.favoriteAuthors = favoriteBooks.flatMap(
         (book): string[] => book.volumeInfo.authors,
       );
-      const favoriteCategories = favoriteBooks.flatMap((book): string[] =>
+      this.favoriteCategories = favoriteBooks.flatMap((book): string[] =>
         book.volumeInfo.categories.map((category): string => {
           return category;
         }),
       );
-      const favoritePublishers = favoriteBooks
+      this.favoritePublishers = favoriteBooks
         .map((book): string | undefined | null => book.volumeInfo?.publisher)
         .filter((book): book is string => book !== undefined || book !== null);
 
-      const categoryAuthorCombination = await this.getAuthorCategoryCombination(
-        favoriteCategories,
-        favoriteAuthors,
-      );
+      const categoryAuthorCombination =
+        await this.getAuthorCategoryCombination();
 
       if (categoryAuthorCombination.books.length) {
         return categoryAuthorCombination;
       }
 
-      const categoryOverloaded =
-        await this.progressiveCategoryOverload(favoriteCategories);
+      const categoryOverloaded = await this.progressiveCategoryOverload();
 
       if (categoryOverloaded.books.length) {
         return categoryOverloaded;
       }
 
-      const authorSuggestions =
-        await this.getAuthorSuggestions(favoriteAuthors);
+      const authorSuggestions = await this.getAuthorSuggestions();
 
       if (authorSuggestions.books.length) {
         return authorSuggestions;
       }
 
-      const publisherSuggestions =
-        await this.getPublisherSuggestions(favoritePublishers);
+      const publisherSuggestions = await this.getPublisherSuggestions();
 
       if (publisherSuggestions.books.length) {
         return publisherSuggestions;
@@ -87,26 +91,23 @@ export class SuggestionService {
     }
   }
 
-  private async getPublisherSuggestions(
-    publishers: string[],
-  ): Promise<SuggestionResult> {
-    const publisherQuery = publishers.map(
+  private async getPublisherSuggestions(): Promise<SuggestionResult> {
+    const publisherQuery = this.favoritePublishers.map(
       (publisher): SearchObject => ({
         term: 'publisher',
         value: publisher,
       }),
     );
     const results = await this.queryTheWholeResult(publisherQuery);
+
     return {
       relevance: Relevance.VERY_BAD,
       books: this.extractBooksFromResult(results),
     };
   }
 
-  private async getAuthorSuggestions(
-    favoriteAuthors: string[],
-  ): Promise<SuggestionResult> {
-    const authorQueryObj = favoriteAuthors.map(
+  private async getAuthorSuggestions(): Promise<SuggestionResult> {
+    const authorQueryObj = this.favoriteAuthors.map(
       (author): SearchObject => ({
         term: 'authors',
         value: author,
@@ -119,17 +120,18 @@ export class SuggestionService {
     };
   }
 
-  private async progressiveCategoryOverload(
-    favoriteCategories: string[],
-  ): Promise<{ relevance: Relevance; books: Book[] }> {
-    const singulars = favoriteCategories.map(
+  private async progressiveCategoryOverload(): Promise<{
+    relevance: Relevance;
+    books: Book[];
+  }> {
+    const singulars = this.favoriteCategories.map(
       (category): SearchObject => ({ term: 'subject', value: category }),
     );
     // if two or more categories combined returns a book, that's way more relevant
     // than just returning a random book from a singular category
     const combinations = this.combineParams(
-      favoriteCategories,
-      favoriteCategories,
+      this.favoriteCategories,
+      this.favoriteCategories,
     );
 
     if (combinations.length) {
@@ -146,13 +148,10 @@ export class SuggestionService {
     };
   }
 
-  private async getAuthorCategoryCombination(
-    favoriteCategories: string[],
-    favoriteAuthors: string[],
-  ): Promise<SuggestionResult> {
+  private async getAuthorCategoryCombination(): Promise<SuggestionResult> {
     const authorCategoryCombinations = this.combineParams(
-      favoriteCategories,
-      favoriteAuthors,
+      this.favoriteCategories,
+      this.favoriteAuthors,
     );
     return {
       relevance: Relevance.PERFECT,
@@ -189,15 +188,18 @@ export class SuggestionService {
     }
 
     const responseNestedArr = await Promise.all(bookPromises);
-    return responseNestedArr.flatMap((responseArr): Book[] =>
+    const books = responseNestedArr.flatMap((responseArr): Book[] =>
       responseArr.flatMap((response): Book[] => response.items),
     );
+
+    return this.filterOutDislikes(books);
   }
 
   private extractBooksFromResult(results: SuccessfulGoogleResponse[]): Book[] {
-    return results.flatMap((result): Book[] =>
+    const books = results.flatMap((result): Book[] =>
       result.items.flatMap((e): Book => e),
     );
+    return this.filterOutDislikes(books);
   }
 
   private async queryTheWholeResult(
@@ -216,5 +218,18 @@ export class SuggestionService {
 
     const resolved = await Promise.all(promiseArr);
     return [initialResponse, ...resolved];
+  }
+
+  private filterOutDislikes(books: Book[]): Book[] {
+    if (!this.dislikes.length) {
+      return books;
+    }
+
+    const dislikedBookSelfLinks = this.dislikes.map(
+      (dislike): string => dislike.selfLink,
+    );
+    return books.filter(
+      (book): book is Book => !dislikedBookSelfLinks.includes(book.selfLink),
+    );
   }
 }
