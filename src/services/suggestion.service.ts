@@ -52,10 +52,11 @@ export class SuggestionService {
       this.favoriteAuthors = favoriteBooks.flatMap(
         (book): string[] => book.volumeInfo.authors,
       );
-      this.favoriteCategories = favoriteBooks.flatMap((book): string[] =>
-        book.volumeInfo.categories.map((category): string => {
-          return category;
-        }),
+      this.favoriteCategoriesFromBooks = favoriteBooks.flatMap(
+        (book): string[] =>
+          book.volumeInfo.categories.map((category): string => {
+            return category;
+          }),
       );
       this.favoritePublishers = favoriteBooks
         .map((book): string | undefined | null => book.volumeInfo?.publisher)
