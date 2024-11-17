@@ -20,9 +20,17 @@ model users {
   password   String
   email      String      @unique
   favorites  favorites[]
+  dislikes   dislikes[]
 }
 
 model favorites {
+  id        Int    @id @default(autoincrement())
+  self_link String
+  user_id   Int
+  user      users  @relation(fields: [user_id], references: [id])
+}
+
+model dislikes {
   id        Int    @id @default(autoincrement())
   self_link String
   user_id   Int
