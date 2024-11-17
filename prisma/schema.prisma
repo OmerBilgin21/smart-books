@@ -14,13 +14,14 @@ datasource db {
 }
 
 model users {
-  id         Int         @id @default(autoincrement())
-  first_name String
-  last_name  String
-  password   String
-  email      String      @unique
-  favorites  favorites[]
-  dislikes   dislikes[]
+  id                  Int                   @id @default(autoincrement())
+  first_name          String
+  last_name           String
+  password            String
+  email               String                @unique
+  favorites           favorites[]
+  dislikes            dislikes[]
+  favorite_categories favorite_categories[]
 }
 
 model favorites {
@@ -35,4 +36,12 @@ model dislikes {
   self_link String
   user_id   Int
   user      users  @relation(fields: [user_id], references: [id])
+}
+
+model favorite_categories {
+  id      Int    @id @default(autoincrement())
+  name    String
+  rank    Int
+  user_id Int
+  user    users  @relation(fields: [user_id], references: [id])
 }
