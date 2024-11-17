@@ -1,6 +1,17 @@
 import { Router, Request, Response } from 'express';
-import { BooksService, FavoriteService, SuggestionService } from 'services';
-import { dbClient, FAVORITES_TABLE } from 'infrastructure';
+import {
+  BooksService,
+  FavoriteService,
+  SuggestionService,
+  DislikeService,
+  FavoriteCategoriesService,
+} from 'services';
+import {
+  dbClient,
+  DISLIKES_TABLE,
+  FAVORITE_CATEGORIES_TABLE,
+  FAVORITES_TABLE,
+} from 'infrastructure';
 
 const router = Router();
 
@@ -9,6 +20,11 @@ const suggestionService = new SuggestionService(
   new FavoriteService({
     db: dbClient,
     tableName: FAVORITES_TABLE,
+  }),
+  new DislikeService({ db: dbClient, tableName: DISLIKES_TABLE }),
+  new FavoriteCategoriesService({
+    db: dbClient,
+    tableName: FAVORITE_CATEGORIES_TABLE,
   }),
 );
 
