@@ -37,3 +37,9 @@ export const favoriteDbTransform = favoriteSchema.transform(
     return transformed;
   },
 );
+
+export { Favorite as Suggestion };
+export { FavoriteDb as SuggestionDb };
+
+export { favoriteTransform as suggestionTransform };
+export { favoriteDbTransform as suggestionDbTransform };
