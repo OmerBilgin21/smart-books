@@ -6,12 +6,15 @@ import {
   SuggestionResult,
   Dislike,
   FavoriteCategory,
+  Favorite,
+  Suggestion,
 } from 'schemas';
 import { BooksService } from './books.service';
 import { FavoriteService } from './favorite.service';
 import { DislikeService } from './dislike.service';
 import { delay } from 'utils';
 import { FavoriteCategoriesService } from './favorite.categories.service';
+import { SuggestionStoreService } from './suggestion-store.service';
 
 export class SuggestionService {
   private dislikes: Dislike[] = [];
@@ -25,13 +28,43 @@ export class SuggestionService {
     private favoriteService: FavoriteService,
     private dislikeService: DislikeService,
     private favoriteCategoriesService: FavoriteCategoriesService,
+    private suggestionStoreService: SuggestionStoreService,
   ) {}
 
+  private async asyncInit(
+    userId: string | number,
+    favoritesOfUser: Favorite[],
+  ): Promise<void> {
+    this.dislikes = await this.dislikeService.userDislikes(userId);
+    this.favoriteCategories =
+      await this.favoriteCategoriesService.userFavoriteCategories(userId);
+    const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
+      return this.bookService.getVolume(favorite.selfLink);
+    });
+
+    const favoriteBooks = await Promise.all(bookPromises);
+    this.favoriteAuthors = favoriteBooks.flatMap(
+      (book): string[] => book.volumeInfo.authors,
+    );
+    this.favoriteCategoriesFromBooks = favoriteBooks.flatMap((book): string[] =>
+      book.volumeInfo.categories.map((category): string => {
+        return category;
+      }),
+    );
+    this.favoritePublishers = favoriteBooks
+      .map((book): string | undefined | null => book.volumeInfo?.publisher)
+      .filter((book): book is string => book !== undefined || book !== null);
+  }
+
+  // TODO: Implement returning suggestions from the DB for user to here as well.
+  // DB versions are self links, query and add onto the calculated suggestions
+  // Could be a nice recovery from returning an empty array?
   public async generateSuggestionsForUser(
     userId: string | number,
   ): Promise<SuggestionResult> {
     try {
       const favoritesOfUser = await this.favoriteService.userFavorites(userId);
+      await this.asyncInit(userId, favoritesOfUser);
 
       if (!favoritesOfUser || !favoritesOfUser.length) {
         console.warn(
@@ -43,49 +76,32 @@ export class SuggestionService {
         };
       }
 
-      this.dislikes = await this.dislikeService.userDislikes(userId);
-      this.favoriteCategories =
-        await this.favoriteCategoriesService.userFavoriteCategories(userId);
-      const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
-        return this.bookService.getVolume(favorite.selfLink);
-      });
-
-      const favoriteBooks = await Promise.all(bookPromises);
-      this.favoriteAuthors = favoriteBooks.flatMap(
-        (book): string[] => book.volumeInfo.authors,
-      );
-      this.favoriteCategoriesFromBooks = favoriteBooks.flatMap(
-        (book): string[] =>
-          book.volumeInfo.categories.map((category): string => {
-            return category;
-          }),
-      );
-      this.favoritePublishers = favoriteBooks
-        .map((book): string | undefined | null => book.volumeInfo?.publisher)
-        .filter((book): book is string => book !== undefined || book !== null);
-
       const categoryAuthorCombination =
         await this.getAuthorCategoryCombination();
 
       if (categoryAuthorCombination.books.length) {
+        await this.saveSuggestion(userId, categoryAuthorCombination.books);
         return categoryAuthorCombination;
       }
 
       const categoryOverloaded = await this.progressiveCategoryOverload();
 
       if (categoryOverloaded.books.length) {
+        await this.saveSuggestion(userId, categoryOverloaded.books);
         return categoryOverloaded;
       }
 
       const authorSuggestions = await this.getAuthorSuggestions();
 
       if (authorSuggestions.books.length) {
+        await this.saveSuggestion(userId, authorSuggestions.books);
         return authorSuggestions;
       }
 
       const publisherSuggestions = await this.getPublisherSuggestions();
 
       if (publisherSuggestions.books.length) {
+        await this.saveSuggestion(userId, publisherSuggestions.books);
         return publisherSuggestions;
       }
 
@@ -317,5 +333,19 @@ export class SuggestionService {
     return books.filter(
       (book): book is Book => !dislikedBookSelfLinks.includes(book.selfLink),
     );
+  }
+
+  private async saveSuggestion(
+    userId: number | string,
+    books: Book[],
+  ): Promise<void> {
+    const promises = books.map(
+      (book): Promise<Suggestion> =>
+        this.suggestionStoreService.create({
+          userId: Number(userId),
+          selfLink: book.selfLink,
+        }),
+    );
+    await Promise.all(promises);
   }
 }
