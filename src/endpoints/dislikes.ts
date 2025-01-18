@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { DislikeService } from 'services';
-import { dbClient, DISLIKES_TABLE } from 'infrastructure';
+import { dbClient, DISLIKES_TABLE, unexpectedError } from 'infrastructure';
 import { parseData } from 'utils';
 import { dislikeSchema } from 'schemas';
 
@@ -25,7 +25,24 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
     res.json(created);
   } catch (createError) {
-    console.error(createError);
+    res.status(500).json(unexpectedError);
+    throw new Error(`Error while creating disliked book: ${createError}`);
+  }
+});
+
+router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw new Error('ID is required to retrieve dislike.');
+  }
+
+  try {
+    const dislikedBook = await dislikeService.userDislikes(userId as string);
+    res.json(dislikedBook);
+  } catch (getError) {
+    res.status(500).json(unexpectedError);
+    throw new Error(`Error while getting disliked book: ${getError}`);
   }
 });
 
