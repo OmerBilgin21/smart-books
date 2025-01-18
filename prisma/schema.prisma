@@ -22,6 +22,7 @@ model users {
   favorites           favorites[]
   dislikes            dislikes[]
   favorite_categories favorite_categories[]
+  suggestions         suggestions[]
 }
 
 model favorites {
@@ -44,4 +45,11 @@ model favorite_categories {
   rank    Int
   user_id Int
   user    users  @relation(fields: [user_id], references: [id])
+}
+
+model suggestions {
+  id        Int    @id @default(autoincrement())
+  self_link String
+  user_id   Int
+  user      users  @relation(fields: [user_id], references: [id])
 }
