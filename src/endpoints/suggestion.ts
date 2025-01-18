@@ -11,7 +11,9 @@ import {
   DISLIKES_TABLE,
   FAVORITE_CATEGORIES_TABLE,
   FAVORITES_TABLE,
+  SUGGESTIONS_TABLE,
 } from 'infrastructure';
+import { SuggestionStoreService } from 'services/suggestion-store.service';
 
 const router = Router();
 
@@ -25,6 +27,10 @@ const suggestionService = new SuggestionService(
   new FavoriteCategoriesService({
     db: dbClient,
     tableName: FAVORITE_CATEGORIES_TABLE,
+  }),
+  new SuggestionStoreService({
+    db: dbClient,
+    tableName: SUGGESTIONS_TABLE,
   }),
 );
 
