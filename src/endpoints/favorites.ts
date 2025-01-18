@@ -3,6 +3,7 @@ import { FavoriteService } from 'services';
 import { dbClient, FAVORITES_TABLE } from 'infrastructure';
 import { parseData } from 'utils';
 import { favoriteSchema } from 'schemas';
+import { unexpectedError } from 'infrastructure';
 
 const router = Router();
 const favoritesService = new FavoriteService({
@@ -25,7 +26,27 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     });
     res.json(created);
   } catch (createError) {
-    console.error(createError);
+    res.status(500).json(unexpectedError);
+    throw new Error(
+      `Error while trying to create a favorite book: ${createError}`,
+    );
+  }
+});
+
+router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    res.json({ error: 'Please provide an user id and a self link' });
+    return;
+  }
+
+  try {
+    const found = await favoritesService.userFavorites(userId);
+    res.json(found);
+  } catch (getError) {
+    res.status(500).json(unexpectedError);
+    throw new Error(`Error while getting favorite book: ${getError}`);
   }
 });
 
