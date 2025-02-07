@@ -1,4 +1,12 @@
 import { config } from 'dotenv';
+
 config();
 
-export const { DATABASE_URL, APP_PORT, GOOGLE_BOOKS_API_KEY } = process.env;
+export const {
+  GOOGLE_BOOKS_API_KEY,
+  DB_PORT,
+  DB_HOST,
+  DB_USER,
+  DB_PASS,
+  APP_PORT,
+} = process.env;
