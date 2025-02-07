@@ -1,6 +1,6 @@
 import { Book, MaturityRating, SuccessfulGoogleResponse } from 'schemas';
 export const mockUser = {
-  id: 1,
+  id: 'mock-id-1',
   firstName: 'omer',
   lastName: 'b',
   password: '123',
@@ -8,29 +8,29 @@ export const mockUser = {
 };
 
 export const mockFavorite = {
-  id: 1,
+  id: 'mock-id-1',
   selfLink: 'http://mock-book-link.com',
-  userId: 1,
+  userid: 'mock-id-1',
 };
 
 export const mockDislike = {
-  id: 1,
+  id: 'mock-id-1',
   selfLink: 'http://mock-book-link-2.com',
-  userId: 1,
+  userid: 'mock-id-1',
 };
 
 export const mockFavoriteCategories = [
   {
-    id: 1,
+    id: 'mock-id-1',
     name: 'fiction',
     rank: 9,
-    userId: 1,
+    userId: 'mock-id-1',
   },
   {
     id: 2,
     name: 'poem',
     rank: 1,
-    userId: 1,
+    userId: 'mock-id-1',
   },
 ];
 
