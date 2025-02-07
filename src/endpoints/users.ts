@@ -1,17 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { UserService } from 'services';
-import { dbClient, USERS_TABLE } from 'infrastructure';
-import { parseData } from 'utils';
-import { userSchema } from 'schemas';
+import { UsersRepository } from 'infrastructure/repositories';
 
 const router = Router();
-const userService = new UserService({
-  db: dbClient,
-  tableName: USERS_TABLE,
-});
+const userRepository = new UsersRepository();
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
-  const data = parseData(req.body, userSchema);
+  const data = req.body;
 
   if (!data) {
     res.status(400).json({ error: 'Invalid user data!' });
@@ -19,7 +13,14 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const created = await userService.create(data);
+    const created = await userRepository.create({
+      email: data.email,
+      lastName: data.lastName,
+      firstName: data.lastName,
+      password: data.password,
+      suggestionIsFresh: false,
+    });
+
     res.json(created);
   } catch (error) {
     console.error(error);
@@ -36,7 +37,7 @@ router.get('/:email', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const found = await userService.get(email);
+    const found = await userRepository.get(email);
 
     res.json({
       email: found.email,

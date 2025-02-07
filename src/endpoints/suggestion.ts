@@ -1,37 +1,16 @@
 import { Router, Request, Response } from 'express';
 import {
-  BooksService,
-  FavoriteService,
-  SuggestionService,
-  DislikeService,
-  FavoriteCategoriesService,
-} from 'services';
-import {
-  dbClient,
-  DISLIKES_TABLE,
-  FAVORITE_CATEGORIES_TABLE,
-  FAVORITES_TABLE,
-  SUGGESTIONS_TABLE,
-} from 'infrastructure';
-import { SuggestionStoreService } from 'services/suggestion-store.service';
+  BookRecordsRepository,
+  FavoriteCategoriesRepository,
+} from 'infrastructure/repositories';
+import { BooksService, SuggestionService } from 'services';
 
 const router = Router();
 
 const suggestionService = new SuggestionService(
   new BooksService(),
-  new FavoriteService({
-    db: dbClient,
-    tableName: FAVORITES_TABLE,
-  }),
-  new DislikeService({ db: dbClient, tableName: DISLIKES_TABLE }),
-  new FavoriteCategoriesService({
-    db: dbClient,
-    tableName: FAVORITE_CATEGORIES_TABLE,
-  }),
-  new SuggestionStoreService({
-    db: dbClient,
-    tableName: SUGGESTIONS_TABLE,
-  }),
+  new BookRecordsRepository(),
+  new FavoriteCategoriesRepository(),
 );
 
 router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
