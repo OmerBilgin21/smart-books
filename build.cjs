@@ -2,6 +2,7 @@
 const esbuild = require('esbuild');
 
 // Run esbuild with your configuration
+
 esbuild
   .build({
     entryPoints: ['src/app.ts'],
@@ -9,8 +10,9 @@ esbuild
     minify: process.env.NODE_ENV === 'production',
     sourcemap: true,
     platform: 'node',
+    target: 'es2021',
+    format: 'esm',
     outdir: 'dist',
-    target: 'node20',
     tsconfig: 'tsconfig.json',
     external: [
       'pg', // PostgreSQL client
