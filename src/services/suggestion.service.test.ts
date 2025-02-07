@@ -12,6 +12,7 @@ import {
   mockGoogleResponse,
 } from '../utils/mocks';
 import { Relevance } from 'schemas';
+import { SuggestionStoreService } from './suggestion-store.service';
 
 const mockFavoriteService = {
   userFavorites: jest.fn(),
@@ -23,6 +24,10 @@ const mockBooksService = {
   getVolumes: jest.fn(),
   getVolume: jest.fn(),
 };
+const mockSuggestionStoreService = {
+  create: jest.fn(),
+  userSuggestions: jest.fn(),
+};
 const mockDislikeService = {
   userDislikes: jest.fn(),
 };
@@ -32,6 +37,7 @@ const suggestionService = new SuggestionService(
   mockFavoriteService as unknown as FavoriteService,
   mockDislikeService as unknown as DislikeService,
   mockFavoriteCategoriesService as unknown as FavoriteCategoriesService,
+  mockSuggestionStoreService as unknown as SuggestionStoreService,
 );
 
 beforeEach((): void => {
@@ -39,6 +45,7 @@ beforeEach((): void => {
   mockBooksService.getVolume.mockClear();
   mockFavoriteService.userFavorites.mockClear();
   mockDislikeService.userDislikes.mockClear();
+  mockSuggestionStoreService.userSuggestions.mockClear();
 });
 
 describe('Suggestion Service', (): void => {
