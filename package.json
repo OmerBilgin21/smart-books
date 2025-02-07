@@ -5,9 +5,10 @@
   "main": "app.js",
   "type": "module",
   "engines": {
-    "node": "v20.15.0",
-    "npm": "10.7.0"
+    "node": "22.13.1",
+    "npm": "11.1.0"
   },
+  "engineStrict": true,
   "scripts": {
     "test": "jest",
     "build": "NODE_ENV=production node build.mjs",
