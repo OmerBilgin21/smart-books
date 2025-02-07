@@ -4,20 +4,18 @@ import {
   SearchObject,
   Relevance,
   SuggestionResult,
-  Dislike,
-  FavoriteCategory,
-  Favorite,
-  Suggestion,
 } from 'schemas';
 import { BooksService } from './books.service';
-import { FavoriteService } from './favorite.service';
-import { DislikeService } from './dislike.service';
 import { delay } from 'utils';
-import { FavoriteCategoriesService } from './favorite.categories.service';
-import { SuggestionStoreService } from './suggestion-store.service';
+import { FavoriteCategory, BookRecord } from 'infrastructure/db/entities';
+import {
+  BookRecordsRepository,
+  FavoriteCategoriesRepository,
+} from 'infrastructure/repositories';
+import { BookRecordType } from 'infrastructure/db/entities/enums';
 
 export class SuggestionService {
-  private dislikes: Dislike[] = [];
+  private dislikes: BookRecord[] = [];
   private favoriteCategoriesFromBooks: string[] = [];
   private favoriteAuthors: string[] = [];
   private favoritePublishers: string[] = [];
@@ -25,32 +23,40 @@ export class SuggestionService {
 
   constructor(
     private bookService: BooksService,
-    private favoriteService: FavoriteService,
-    private dislikeService: DislikeService,
-    private favoriteCategoriesService: FavoriteCategoriesService,
-    private suggestionStoreService: SuggestionStoreService,
+    private bookRecordRepository: BookRecordsRepository,
+    private favoriteCategoriesRepository: FavoriteCategoriesRepository,
   ) {}
 
   private async asyncInit(
-    userId: string | number,
-    favoritesOfUser: Favorite[],
+    userId: string,
+    favoritesOfUser: BookRecord[],
   ): Promise<void> {
-    this.dislikes = await this.dislikeService.userDislikes(userId);
+    this.dislikes = await this.bookRecordRepository.getRecordsOfTypeForUser(
+      userId,
+      BookRecordType.DISLIKE,
+    );
+
     this.favoriteCategories =
-      await this.favoriteCategoriesService.userFavoriteCategories(userId);
+      await this.favoriteCategoriesRepository.getFavoriteCategoriesOfUser(
+        userId,
+      );
+
     const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
       return this.bookService.getVolume(favorite.selfLink);
     });
 
     const favoriteBooks = await Promise.all(bookPromises);
+
     this.favoriteAuthors = favoriteBooks.flatMap(
       (book): string[] => book.volumeInfo.authors,
     );
+
     this.favoriteCategoriesFromBooks = favoriteBooks.flatMap((book): string[] =>
       book.volumeInfo.categories.map((category): string => {
         return category;
       }),
     );
+
     this.favoritePublishers = favoriteBooks
       .map((book): string | undefined | null => book.volumeInfo?.publisher)
       .filter((book): book is string => book !== undefined || book !== null);
@@ -60,10 +66,15 @@ export class SuggestionService {
   // DB versions are self links, query and add onto the calculated suggestions
   // Could be a nice recovery from returning an empty array?
   public async generateSuggestionsForUser(
-    userId: string | number,
+    userId: string,
   ): Promise<SuggestionResult> {
     try {
-      const favoritesOfUser = await this.favoriteService.userFavorites(userId);
+      const favoritesOfUser =
+        await this.bookRecordRepository.getRecordsOfTypeForUser(
+          userId,
+          BookRecordType.FAVORITE,
+        );
+
       await this.asyncInit(userId, favoritesOfUser);
 
       if (!favoritesOfUser || !favoritesOfUser.length) {
@@ -335,15 +346,14 @@ export class SuggestionService {
     );
   }
 
-  private async saveSuggestion(
-    userId: number | string,
-    books: Book[],
-  ): Promise<void> {
+  private async saveSuggestion(userId: string, books: Book[]): Promise<void> {
     const promises = books.map(
-      (book): Promise<Suggestion> =>
-        this.suggestionStoreService.create({
-          userId: Number(userId),
+      (book): Promise<BookRecord> =>
+        this.bookRecordRepository.create({
+          // userId: Number(userId),
           selfLink: book.selfLink,
+          type: BookRecordType.SUGGESTION,
+          userId,
         }),
     );
     await Promise.all(promises);

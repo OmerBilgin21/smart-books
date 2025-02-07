@@ -1,22 +1,17 @@
-import { FavoriteService } from './favorite.service';
-import { FavoriteCategoriesService } from './favorite.categories.service';
 import { BooksService } from './books.service';
 import { SuggestionService } from './suggestion.service';
-import { DislikeService } from './dislike.service';
+import {
+  BookRecordsRepository,
+  FavoriteCategoriesRepository,
+} from 'infrastructure/repositories';
 import {
   mockBooks,
-  mockDislike,
-  mockFavorite,
   mockFavoriteCategories,
   mockUser,
   mockGoogleResponse,
 } from '../utils/mocks';
 import { Relevance } from 'schemas';
-import { SuggestionStoreService } from './suggestion-store.service';
 
-const mockFavoriteService = {
-  userFavorites: jest.fn(),
-};
 const mockFavoriteCategoriesService = {
   userFavoriteCategories: jest.fn(),
 };
@@ -24,41 +19,33 @@ const mockBooksService = {
   getVolumes: jest.fn(),
   getVolume: jest.fn(),
 };
-const mockSuggestionStoreService = {
+const mockBookRecordRepository = {
   create: jest.fn(),
-  userSuggestions: jest.fn(),
+  getRecordsOfTypeForUser: jest.fn(),
 };
-const mockDislikeService = {
-  userDislikes: jest.fn(),
+const mockFavoriteCategoriesRepository = {
+  create: jest.fn(),
+  getFavoriteCategoriesOfUser: jest.fn(),
 };
 
 const suggestionService = new SuggestionService(
   mockBooksService as unknown as BooksService,
-  mockFavoriteService as unknown as FavoriteService,
-  mockDislikeService as unknown as DislikeService,
-  mockFavoriteCategoriesService as unknown as FavoriteCategoriesService,
-  mockSuggestionStoreService as unknown as SuggestionStoreService,
+  mockBookRecordRepository as unknown as BookRecordsRepository,
+  mockFavoriteCategoriesRepository as unknown as FavoriteCategoriesRepository,
 );
-
-beforeEach((): void => {
-  mockBooksService.getVolumes.mockClear();
-  mockBooksService.getVolume.mockClear();
-  mockFavoriteService.userFavorites.mockClear();
-  mockDislikeService.userDislikes.mockClear();
-  mockSuggestionStoreService.userSuggestions.mockClear();
-});
 
 describe('Suggestion Service', (): void => {
   test('returns empty array if there are no favorite books', async (): Promise<void> => {
-    mockFavoriteService.userFavorites.mockResolvedValueOnce([]);
-    const books = await suggestionService.generateSuggestionsForUser(1);
+    mockBookRecordRepository.getRecordsOfTypeForUser.mockResolvedValueOnce([]);
+    const books =
+      await suggestionService.generateSuggestionsForUser('mock-id-1');
     expect(books.books.length).toBe(0);
     expect(books.relevance).toBe(Relevance.NO_SUGGESTION);
   });
 
   test('Suggests relevant books for author/category combination', async (): Promise<void> => {
-    mockFavoriteService.userFavorites.mockReturnValueOnce([mockFavorite]);
-    mockDislikeService.userDislikes.mockReturnValueOnce(mockDislike);
+    mockBookRecordRepository.getRecordsOfTypeForUser.mockResolvedValueOnce([]);
+    mockBookRecordRepository.getRecordsOfTypeForUser.mockResolvedValueOnce([]);
     mockFavoriteCategoriesService.userFavoriteCategories.mockReturnValueOnce(
       mockFavoriteCategories,
     );
