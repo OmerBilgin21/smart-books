@@ -2,9 +2,11 @@ import { BookRecordsRepository } from 'infrastructure/repositories';
 import { Router, Request, Response } from 'express';
 import { unexpectedError } from 'infrastructure';
 import { BookRecordType } from 'infrastructure/db/entities/enums';
+import { UsersRepository } from 'infrastructure/repositories';
 
 const router = Router();
 const bookRecordsRepository = new BookRecordsRepository();
+const usersRepository = new UsersRepository();
 
 router.post('/dislike', async (req: Request, res: Response): Promise<void> => {
   const data = req.body;
@@ -20,6 +22,7 @@ router.post('/dislike', async (req: Request, res: Response): Promise<void> => {
       selfLink: data.selfLink,
       type: BookRecordType.DISLIKE,
     });
+    await usersRepository.invalidateFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);
@@ -63,6 +66,7 @@ router.post('/favorite', async (req: Request, res: Response): Promise<void> => {
       selfLink: data.selfLink,
       type: BookRecordType.FAVORITE,
     });
+    await usersRepository.invalidateFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);

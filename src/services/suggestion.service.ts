@@ -7,10 +7,11 @@ import {
 } from 'schemas';
 import { BooksService } from './books.service';
 import { delay } from 'utils';
-import { FavoriteCategory, BookRecord } from 'infrastructure/db/entities';
+import { FavoriteCategory, BookRecord, User } from 'infrastructure/db/entities';
 import {
   BookRecordsRepository,
   FavoriteCategoriesRepository,
+  UsersRepository,
 } from 'infrastructure/repositories';
 import { BookRecordType } from 'infrastructure/db/entities/enums';
 
@@ -20,11 +21,13 @@ export class SuggestionService {
   private favoriteAuthors: string[] = [];
   private favoritePublishers: string[] = [];
   private favoriteCategories: FavoriteCategory[] = [];
+  private user: User;
 
   constructor(
     private bookService: BooksService,
     private bookRecordRepository: BookRecordsRepository,
     private favoriteCategoriesRepository: FavoriteCategoriesRepository,
+    private usersRepository: UsersRepository,
   ) {}
 
   private async asyncInit(
@@ -59,12 +62,11 @@ export class SuggestionService {
 
     this.favoritePublishers = favoriteBooks
       .map((book): string | undefined | null => book.volumeInfo?.publisher)
-      .filter((book): book is string => book !== undefined || book !== null);
+      .filter((book): book is string => !!book);
+
+    this.user = await this.usersRepository.get(userId);
   }
 
-  // TODO: Implement returning suggestions from the DB for user to here as well.
-  // DB versions are self links, query and add onto the calculated suggestions
-  // Could be a nice recovery from returning an empty array?
   public async generateSuggestionsForUser(
     userId: string,
   ): Promise<SuggestionResult> {
@@ -87,11 +89,31 @@ export class SuggestionService {
         };
       }
 
+      if (this.user.suggestionIsFresh) {
+        const alreadySuggestedRecords =
+          await this.bookRecordRepository.getRecordsOfTypeForUser(
+            userId,
+            BookRecordType.SUGGESTION,
+          );
+
+        const bookPromises = alreadySuggestedRecords.map(
+          (book): Promise<Book> => {
+            return this.bookService.getVolume(book.selfLink);
+          },
+        );
+
+        return {
+          relevance: Relevance.NO_SUGGESTION,
+          books: await Promise.all(bookPromises),
+        };
+      }
+
       const categoryAuthorCombination =
         await this.getAuthorCategoryCombination();
 
       if (categoryAuthorCombination.books.length) {
         await this.saveSuggestion(userId, categoryAuthorCombination.books);
+        await this.usersRepository.suggestionCalculated(userId);
         return categoryAuthorCombination;
       }
 
@@ -99,6 +121,7 @@ export class SuggestionService {
 
       if (categoryOverloaded.books.length) {
         await this.saveSuggestion(userId, categoryOverloaded.books);
+        await this.usersRepository.suggestionCalculated(userId);
         return categoryOverloaded;
       }
 
@@ -106,6 +129,7 @@ export class SuggestionService {
 
       if (authorSuggestions.books.length) {
         await this.saveSuggestion(userId, authorSuggestions.books);
+        await this.usersRepository.suggestionCalculated(userId);
         return authorSuggestions;
       }
 
@@ -113,6 +137,7 @@ export class SuggestionService {
 
       if (publisherSuggestions.books.length) {
         await this.saveSuggestion(userId, publisherSuggestions.books);
+        await this.usersRepository.suggestionCalculated(userId);
         return publisherSuggestions;
       }
 
@@ -121,6 +146,9 @@ export class SuggestionService {
         books: [],
       };
     } catch (generateSuggestionError) {
+      if (this.user.suggestionIsFresh) {
+        await this.usersRepository.invalidateFreshness(userId);
+      }
       throw new Error(
         `Error while generating suggestions for user: ${generateSuggestionError}`,
       );

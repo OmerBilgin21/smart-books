@@ -3,6 +3,7 @@ import { SuggestionService } from './suggestion.service';
 import {
   BookRecordsRepository,
   FavoriteCategoriesRepository,
+  UsersRepository,
 } from 'infrastructure/repositories';
 import {
   mockBooks,
@@ -27,11 +28,18 @@ const mockFavoriteCategoriesRepository = {
   create: jest.fn(),
   getFavoriteCategoriesOfUser: jest.fn(),
 };
+const mockUsersRepository = {
+  create: jest.fn(),
+  get: jest.fn(),
+  suggestionCalculated: jest.fn(),
+  invalidateFreshnes: jest.fn(),
+};
 
 const suggestionService = new SuggestionService(
   mockBooksService as unknown as BooksService,
   mockBookRecordRepository as unknown as BookRecordsRepository,
   mockFavoriteCategoriesRepository as unknown as FavoriteCategoriesRepository,
+  mockUsersRepository as unknown as UsersRepository,
 );
 
 describe('Suggestion Service', (): void => {

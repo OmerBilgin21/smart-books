@@ -1,10 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { unexpectedError } from 'infrastructure';
-import { FavoriteCategoriesRepository } from 'infrastructure/repositories';
+import {
+  FavoriteCategoriesRepository,
+  UsersRepository,
+} from 'infrastructure/repositories';
 
 const router = Router();
 
 const favoriteCategoriesRepository = new FavoriteCategoriesRepository();
+const usersRepository = new UsersRepository();
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   const data = req.body;
@@ -20,6 +24,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       userId: data.userId,
       rank: data.rank,
     });
+    await usersRepository.invalidateFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import {
   BookRecordsRepository,
   FavoriteCategoriesRepository,
+  UsersRepository,
 } from 'infrastructure/repositories';
 import { BooksService, SuggestionService } from 'services';
 
@@ -11,6 +12,7 @@ const suggestionService = new SuggestionService(
   new BooksService(),
   new BookRecordsRepository(),
   new FavoriteCategoriesRepository(),
+  new UsersRepository(),
 );
 
 router.get('/:userId', async (req: Request, res: Response): Promise<void> => {

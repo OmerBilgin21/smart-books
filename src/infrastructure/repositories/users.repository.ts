@@ -31,4 +31,22 @@ export class UsersRepository extends BaseRepository {
       throw new Error('User not found');
     }
   }
+
+  public async invalidateFreshness(identifier: string): Promise<User> {
+    const repo = await this.getRepository(User);
+    const user = await this.get(identifier);
+    return repo.save({
+      ...user,
+      suggestionIsFresh: false,
+    });
+  }
+
+  public async suggestionCalculated(identifier: string): Promise<User> {
+    const repo = await this.getRepository(User);
+    const user = await this.get(identifier);
+    return repo.save({
+      ...user,
+      suggestionIsFresh: true,
+    });
+  }
 }
