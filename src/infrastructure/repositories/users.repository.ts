@@ -19,7 +19,9 @@ export class UsersRepository extends BaseRepository {
     return repo.save(ins);
   }
 
-  public async get(identifier: string): Promise<User> {
+  public async get(
+    identifier: string,
+  ): Promise<Omit<User, 'books' | 'categories'>> {
     try {
       const repo = await this.getRepository(User);
 
@@ -50,7 +52,7 @@ export class UsersRepository extends BaseRepository {
     const repo = await this.getRepository(User);
     const user = await this.get(identifier);
     return repo.save({
-      ...user,
+      id: user.id,
       suggestionIsFresh: true,
     });
   }
