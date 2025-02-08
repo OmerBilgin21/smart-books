@@ -6,9 +6,9 @@ import {
   mockUser,
   mockGoogleResponse,
 } from '../utils/mocks.js';
-import { UsersRepository } from '../infrastructure/repositories/users.repository';
-import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository';
-import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
 import { Relevance } from '../schemas/book.js';
 
 const mockFavoriteCategoriesService = {

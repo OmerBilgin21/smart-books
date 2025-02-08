@@ -6,16 +6,16 @@ import {
   SearchObject,
 } from '../schemas/book.js';
 import { BooksService } from './books.service.js';
-import { delay } from '../utils/general.js';
 import {
   BookRecord,
   FavoriteCategory,
-  User,
 } from '../infrastructure/db/entities/index.js';
 import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
 import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
 import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
 import { BookRecordType } from '../infrastructure/db/entities/enums.js';
+import { PlainUser } from '../schemas/user.js';
+import { BookRecordCreate } from '../schemas/book.record.js';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];
@@ -23,7 +23,7 @@ export class SuggestionService {
   private favoriteAuthors: string[] = [];
   private favoritePublishers: string[] = [];
   private favoriteCategories: FavoriteCategory[] = [];
-  private user: User;
+  private user: PlainUser;
 
   constructor(
     private bookService: BooksService,
@@ -79,8 +79,6 @@ export class SuggestionService {
           BookRecordType.FAVORITE,
         );
 
-      await this.asyncInit(userId, favoritesOfUser);
-
       if (!favoritesOfUser || !favoritesOfUser.length) {
         console.warn(
           'Can not generate suggestions for a user that does not have any favorites.',
@@ -91,7 +89,10 @@ export class SuggestionService {
         };
       }
 
+      await this.asyncInit(userId, favoritesOfUser);
+
       if (this.user.suggestionIsFresh) {
+        console.log('We send out the already calculated ones ');
         const alreadySuggestedRecords =
           await this.bookRecordRepository.getRecordsOfTypeForUser(
             userId,
@@ -114,6 +115,7 @@ export class SuggestionService {
         await this.getAuthorCategoryCombination();
 
       if (categoryAuthorCombination.books.length) {
+        console.log('is this the place? ');
         await this.saveSuggestion(userId, categoryAuthorCombination.books);
         await this.usersRepository.suggestionCalculated(userId);
         return categoryAuthorCombination;
@@ -164,11 +166,11 @@ export class SuggestionService {
         value: publisher,
       }),
     );
-    const results = await this.queryTheWholeResult(publisherQuery);
+    const results = await this.bookService.getVolumes(publisherQuery);
 
     return {
       relevance: Relevance.VERY_BAD,
-      books: this.extractBooksFromResult(results),
+      books: results.items,
     };
   }
 
@@ -179,10 +181,10 @@ export class SuggestionService {
         value: author,
       }),
     );
-    const results = await this.queryTheWholeResult(authorQueryObj);
+    const results = await this.bookService.getVolumes(authorQueryObj);
     return {
       relevance: Relevance.MEDIOCRE,
-      books: this.extractBooksFromResult(results),
+      books: results.items,
     };
   }
 
@@ -256,11 +258,11 @@ export class SuggestionService {
       };
     }
 
-    const lessRelevantResults = await this.queryTheWholeResult(singulars);
+    const lessRelevantResults = await this.bookService.getVolumes(singulars);
 
     return {
       relevance: Relevance.BAD,
-      books: this.extractBooksFromResult(lessRelevantResults),
+      books: lessRelevantResults.items,
     };
   }
 
@@ -314,53 +316,19 @@ export class SuggestionService {
     return combinations;
   }
 
-  private getLimitDependingOnChunkSize<T>(chunks: T[][]): number {
-    return Math.ceil(50 / chunks.length);
-  }
-
   private async getChunkedBooks(queries: SearchObject[][]): Promise<Book[]> {
-    const bookPromises: Promise<SuccessfulGoogleResponse[]>[] = [];
+    const bookPromises: Promise<SuccessfulGoogleResponse>[] = [];
     for (const query of queries) {
-      bookPromises.push(
-        this.queryTheWholeResult(
-          query,
-          this.getLimitDependingOnChunkSize(queries),
-        ),
-      );
+      bookPromises.push(this.bookService.getVolumes(query));
     }
 
     const responseNestedArr = await Promise.all(bookPromises);
-    const books = responseNestedArr.flatMap((responseArr): Book[] =>
-      responseArr.flatMap((response): Book[] => response.items),
-    );
+
+    const books = responseNestedArr
+      .filter((record): boolean => record.totalItems > 0)
+      .flatMap((responseArr): Book[] => responseArr.items);
 
     return this.filterOutDislikes(books);
-  }
-
-  private extractBooksFromResult(results: SuccessfulGoogleResponse[]): Book[] {
-    const books = results.flatMap((result): Book[] =>
-      result.items.flatMap((e): Book => e),
-    );
-    return this.filterOutDislikes(books);
-  }
-
-  private async queryTheWholeResult(
-    query: SearchObject[],
-    limit: number = 5,
-  ): Promise<SuccessfulGoogleResponse[]> {
-    const initialResponse = await this.bookService.getVolumes(query);
-    const promiseArr: Promise<SuccessfulGoogleResponse>[] = [];
-
-    const increaseAmount = 40 - limit < 0 ? 40 : limit;
-    for (let i = 0; i < limit; i += increaseAmount) {
-      promiseArr.push(
-        this.bookService.getVolumes(query, { start: i, limit: 1 }),
-      );
-      await delay(300);
-    }
-
-    const resolved = await Promise.all(promiseArr);
-    return [initialResponse, ...resolved];
   }
 
   private filterOutDislikes(books: Book[]): Book[] {
@@ -371,21 +339,22 @@ export class SuggestionService {
     const dislikedBookSelfLinks = this.dislikes.map(
       (dislike): string => dislike.selfLink,
     );
+
     return books.filter(
       (book): book is Book => !dislikedBookSelfLinks.includes(book.selfLink),
     );
   }
 
   private async saveSuggestion(userId: string, books: Book[]): Promise<void> {
-    const promises = books.map(
-      (book): Promise<BookRecord> =>
-        this.bookRecordRepository.create({
-          // userId: Number(userId),
-          selfLink: book.selfLink,
-          type: BookRecordType.SUGGESTION,
-          userId,
-        }),
-    );
-    await Promise.all(promises);
+    const creatableBookRecords = books.map((book): BookRecordCreate => {
+      return {
+        selfLink: book.selfLink,
+        type: BookRecordType.SUGGESTION,
+        googleId: book.id,
+        userId,
+      };
+    });
+
+    await this.bookRecordRepository.bulkCreate(creatableBookRecords);
   }
 }
