@@ -38,29 +38,26 @@ export class BookRecordsRepository extends BaseRepository {
     const qb = thisRepo.createQueryBuilder('book_records');
 
     const rawRecords = await qb
-      .select('book_records.id')
+      .select('book_records.googleId')
       .where(
         'book_records.user = :userId AND book_records.type = :type AND book_records.googleId IN (:...googleIds)',
         { userId: user.id, type: bookRecords[0].type, googleIds: uniqueIds },
       )
       .getRawMany();
 
-    const existingIds = rawRecords.map((row): string => row.id);
-    console.log('existingIds: ', existingIds);
+    const existingIds = rawRecords.map((row): string => row.googleId);
 
-    uniqueCreateObjs.filter((record): boolean =>
-      existingIds.includes(record.googleId),
-    );
-
-    console.log('uniqueCreateObjs: ', uniqueCreateObjs);
+    uniqueCreateObjs.forEach((record, idx): void => {
+      if (existingIds.includes(record.googleId)) {
+        existingIds.splice(idx, 1);
+      }
+    });
 
     const promises = uniqueCreateObjs.map((record): Promise<BookRecord> => {
       const beforeCreate = {
         ...record,
         user,
       };
-
-      console.log('beforeCreate: ', beforeCreate);
 
       return thisRepo.save(beforeCreate);
     });
