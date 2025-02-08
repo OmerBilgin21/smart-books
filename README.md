@@ -8,8 +8,8 @@ Install the packages.
 Run `npm run m:run` command to run the already generated migration files on your database, might take a while on initial run.
 Create a .env file with the following key/values:
 
-GOOGLE_BOOKS_API_KEY=""
-DB_USERNAME=""
+GOOGLE_BOOKS_API_KEY=""  
+DB_USERNAME=""  
 DB_PASS=""
 
 The rest of the environment variables are defined for the DEV environment, for production use, define those under "nodemonConfig" at package.json!
