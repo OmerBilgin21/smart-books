@@ -92,7 +92,6 @@ export class SuggestionService {
       await this.asyncInit(userId, favoritesOfUser);
 
       if (this.user.suggestionIsFresh) {
-        console.log('We send out the already calculated ones ');
         const alreadySuggestedRecords =
           await this.bookRecordRepository.getRecordsOfTypeForUser(
             userId,
@@ -115,7 +114,6 @@ export class SuggestionService {
         await this.getAuthorCategoryCombination();
 
       if (categoryAuthorCombination.books.length) {
-        console.log('is this the place? ');
         await this.saveSuggestion(userId, categoryAuthorCombination.books);
         await this.usersRepository.suggestionCalculated(userId);
         return categoryAuthorCombination;
