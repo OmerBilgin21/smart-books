@@ -21,6 +21,7 @@ router.post('/dislike', async (req: Request, res: Response): Promise<void> => {
       userId: data.userId,
       selfLink: data.selfLink,
       type: BookRecordType.DISLIKE,
+      googleId: data.googleId,
     });
     await usersRepository.invalidateFreshness(data.userId);
     res.json(created);
@@ -63,6 +64,7 @@ router.post('/favorite', async (req: Request, res: Response): Promise<void> => {
   try {
     const created = await bookRecordsRepository.create({
       userId: data.userId,
+      googleId: data.googleId,
       selfLink: data.selfLink,
       type: BookRecordType.FAVORITE,
     });
