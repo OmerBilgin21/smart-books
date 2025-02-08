@@ -15,7 +15,7 @@ const migrationsPath =
 
 console.info('migrationsPath: ', migrationsPath);
 
-export default new DataSource({
+const appDataSource = new DataSource({
   type: 'postgres',
   host: DB_HOST,
   port: Number.isFinite(Number(DB_PORT)) ? Number(DB_PORT) : 5432,
@@ -33,3 +33,12 @@ export default new DataSource({
   migrations: [migrationsPath],
   installExtensions: true,
 });
+
+export const getDataSource = async (): Promise<DataSource> => {
+  if (appDataSource.isInitialized) {
+    return appDataSource;
+  }
+  return await appDataSource.initialize();
+};
+
+export default appDataSource;
