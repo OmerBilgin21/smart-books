@@ -1,6 +1,8 @@
-import { BaseRepository } from './base.repository';
-import { UserCreate } from 'schemas/user';
-import { User } from 'infrastructure/db/entities/user';
+import { BaseRepository } from './base.repository.js';
+import { User } from '../db/entities/index.js';
+import { UserCreate } from '../../schemas/user.js';
+import { validate } from 'uuid';
+
 import bcrypt from 'bcrypt';
 
 export class UsersRepository extends BaseRepository {
@@ -21,14 +23,17 @@ export class UsersRepository extends BaseRepository {
     try {
       const repo = await this.getRepository(User);
 
-      return await repo
-        .createQueryBuilder('user')
-        .where('user.id = :identifier or user.email = :identifier', {
-          identifier,
-        })
-        .getOneOrFail();
-    } catch {
-      throw new Error('User not found');
+      const qb = repo.createQueryBuilder('user');
+
+      if (validate(identifier)) {
+        qb.where('user.id = :identifier', { identifier });
+      } else {
+        qb.where('user.email = :identifier', { identifier });
+      }
+
+      return await qb.getOneOrFail();
+    } catch (e) {
+      throw new Error(`User not found: ${e}`);
     }
   }
 

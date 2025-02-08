@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { UsersRepository } from 'infrastructure/repositories';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
 
 const router = Router();
 const userRepository = new UsersRepository();
@@ -28,26 +28,28 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.get('/:email', async (req: Request, res: Response): Promise<void> => {
-  const { email } = req.params;
+router.get(
+  '/:identifier',
+  async (req: Request, res: Response): Promise<void> => {
+    const { identifier: emailOrId } = req.params;
 
-  if (!email) {
-    res.status(400).json({ error: 'Please provide an email!' });
-    return;
-  }
+    if (!emailOrId) {
+      res.status(400).json({ error: 'Please provide an email!' });
+      return;
+    }
 
-  try {
-    const found = await userRepository.get(email);
+    try {
+      const found = await userRepository.get(emailOrId);
 
-    res.json({
-      email: found.email,
-      firstName: found.firstName,
-      id: found.id,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(404).json({ error: 'User not found!' });
-  }
-});
+      res.json({
+        email: found.email,
+        firstName: found.firstName,
+        id: found.id,
+      });
+    } catch {
+      res.status(404).json({ error: 'User not found!' });
+    }
+  },
+);
 
 export default router;

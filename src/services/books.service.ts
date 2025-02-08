@@ -1,6 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
-import { SearchObject, SuccessfulGoogleResponse, Book } from 'schemas/index';
-import { GOOGLE_BOOKS_API_KEY } from 'infrastructure';
+import {
+  SearchObject,
+  SuccessfulGoogleResponse,
+  Book,
+} from '../schemas/book.js';
+import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs.js';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
 const base = axios.create({

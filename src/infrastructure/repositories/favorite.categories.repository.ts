@@ -1,6 +1,6 @@
-import { FavoriteCategoryCreate } from 'schemas/favorite.category';
-import { BaseRepository } from './base.repository';
-import { FavoriteCategory } from 'infrastructure/db/entities';
+import { BaseRepository } from './base.repository.js';
+import { FavoriteCategoryCreate } from '../../schemas/favorite.category.js';
+import { FavoriteCategory } from '../db/entities/index.js';
 
 export class FavoriteCategoriesRepository extends BaseRepository {
   public async create(

@@ -1,7 +1,9 @@
+import 'reflect-metadata';
 import express, { Express } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { APP_PORT, routes } from 'infrastructure';
+import { APP_PORT } from './infrastructure/envs.js';
+import { routes } from './infrastructure/routes.js';
 
 export const app: Express = express();
 

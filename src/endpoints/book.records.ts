@@ -1,8 +1,8 @@
-import { BookRecordsRepository } from 'infrastructure/repositories';
 import { Router, Request, Response } from 'express';
-import { unexpectedError } from 'infrastructure';
-import { BookRecordType } from 'infrastructure/db/entities/enums';
-import { UsersRepository } from 'infrastructure/repositories';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
+import { unexpectedError } from '../infrastructure/constants.js';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
+import { BookRecordType } from '../infrastructure/db/entities/enums.js';
 
 const router = Router();
 const bookRecordsRepository = new BookRecordsRepository();
@@ -95,3 +95,5 @@ router.get(
     }
   },
 );
+
+export default router;

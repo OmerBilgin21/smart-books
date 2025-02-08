@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
-import {
-  BookRecordsRepository,
-  FavoriteCategoriesRepository,
-  UsersRepository,
-} from 'infrastructure/repositories';
-import { BooksService, SuggestionService } from 'services';
+import { BooksService } from '../services/books.service.js';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
+import { SuggestionService } from '../services/suggestion.service.js';
 
 const router = Router();
 

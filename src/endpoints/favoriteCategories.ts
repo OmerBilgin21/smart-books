@@ -1,9 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { unexpectedError } from 'infrastructure';
-import {
-  FavoriteCategoriesRepository,
-  UsersRepository,
-} from 'infrastructure/repositories';
+import { unexpectedError } from '../infrastructure/constants.js';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
 
 const router = Router();
 

@@ -5,8 +5,8 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "sourceMap": true,
     "outDir": "./dist",
     "esModuleInterop": true,
@@ -19,9 +19,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "rootDir": "./src",
-    "baseUrl": "./src"
+    "strictFunctionTypes": true
   },
   "exclude": [
     "node_modules",
@@ -31,5 +29,5 @@
     "dist",
     "./babel.config.js"
   ],
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts"]
 }

@@ -1,7 +1,7 @@
-import { BookRecord } from 'infrastructure/db/entities';
-import { BaseRepository } from './base.repository';
-import { BookRecordCreate } from 'schemas/book.record';
-import { BookRecordType } from 'infrastructure/db/entities/enums';
+import { BaseRepository } from './base.repository.js';
+import { BookRecordCreate } from '../../schemas/book.record.js';
+import { BookRecord } from '../db/entities/index.js';
+import { BookRecordType } from '../db/entities/enums.js';
 
 export class BookRecordsRepository extends BaseRepository {
   public async create(bookRecord: BookRecordCreate): Promise<BookRecord> {

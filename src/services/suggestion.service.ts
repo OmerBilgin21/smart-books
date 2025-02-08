@@ -1,19 +1,21 @@
 import {
   Book,
-  SuccessfulGoogleResponse,
-  SearchObject,
-  Relevance,
   SuggestionResult,
-} from 'schemas';
-import { BooksService } from './books.service';
-import { delay } from 'utils';
-import { FavoriteCategory, BookRecord, User } from 'infrastructure/db/entities';
+  SuccessfulGoogleResponse,
+  Relevance,
+  SearchObject,
+} from '../schemas/book.js';
+import { BooksService } from './books.service.js';
+import { delay } from '../utils/general.js';
 import {
-  BookRecordsRepository,
-  FavoriteCategoriesRepository,
-  UsersRepository,
-} from 'infrastructure/repositories';
-import { BookRecordType } from 'infrastructure/db/entities/enums';
+  BookRecord,
+  FavoriteCategory,
+  User,
+} from '../infrastructure/db/entities/index.js';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
+import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
+import { BookRecordType } from '../infrastructure/db/entities/enums.js';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];

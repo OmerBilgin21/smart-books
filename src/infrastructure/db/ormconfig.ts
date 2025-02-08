@@ -1,18 +1,19 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { config } from 'dotenv';
+import entities from './entities/index.js';
+import path from 'node:path';
+import url from 'node:url';
 
 config();
-const { DB_HOST, DB_PASS, DB_PORT, DB_USER } = process.env;
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const entitiesPath = __dirname + '/entities/index.ts';
-const migrationsPath = __dirname + '/migrations/**/*.ts';
 
-console.info('migrations path:', migrationsPath);
-console.info('entities path: ', entitiesPath);
+const { DB_HOST, DB_PASS, DB_PORT, DB_USER } = process.env;
+
+const migrationsPath =
+  path.dirname(url.fileURLToPath(import.meta.url)) + '/migrations/**/*.ts';
+
+console.info('migrationsPath: ', migrationsPath);
 
 export default new DataSource({
   type: 'postgres',
@@ -28,7 +29,7 @@ export default new DataSource({
   poolSize: 10,
   connectTimeoutMS: 7 * 1000,
   logging: false,
-  entities: [entitiesPath],
+  entities: entities,
   migrations: [migrationsPath],
   installExtensions: true,
 });

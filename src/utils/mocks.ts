@@ -1,4 +1,8 @@
-import { Book, MaturityRating, SuccessfulGoogleResponse } from 'schemas';
+import {
+  Book,
+  MaturityRating,
+  SuccessfulGoogleResponse,
+} from '../schemas/book.js';
 export const mockUser = {
   id: 'mock-id-1',
   firstName: 'omer',
