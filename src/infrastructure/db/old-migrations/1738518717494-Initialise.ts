@@ -5,6 +5,9 @@ export class Initialise1738518717494 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
+      `CREATE TYPE "book_records_type_enum" AS ENUM('dislike', 'favorite', 'suggestion')`,
+    );
+    await queryRunner.query(
       `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "first_name" character varying NOT NULL, "last_name" character varying NOT NULL, "password" character varying NOT NULL, "suggestion_is_fresh" boolean NOT NULL DEFAULT false, "email" character varying NOT NULL, CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
@@ -31,5 +34,6 @@ export class Initialise1738518717494 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "book_records"`);
     await queryRunner.query(`DROP TABLE "favotire_categories"`);
     await queryRunner.query(`DROP TABLE "users"`);
+    await queryRunner.query(`DROP TYPE book_records_type_enum`);
   }
 }
