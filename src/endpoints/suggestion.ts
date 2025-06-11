@@ -5,6 +5,7 @@ import { UsersRepository } from '../infrastructure/repositories/users.repository
 import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
 import { SuggestionService } from '../services/suggestion.service.js';
 import { LLMService } from '../services/llm.service.js';
+import { Book } from '../schemas/book.js';
 
 const router = Router();
 
@@ -28,7 +29,23 @@ router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
   try {
     const suggestions =
       await suggestionService.generateSuggestionsForUser(userId);
-    res.json(suggestions);
+
+    const payload = suggestions.books.map(
+      (sg): { id: string; name: string } => ({
+        id: sg.id,
+        name: sg.volumeInfo.title,
+      }),
+    );
+    const ssrr =
+      await llmService.composeSuggestionStructuredResponseRequest(payload);
+    const chatRes = await llmService.structuredChat(ssrr);
+
+    const returnedSuggestions = chatRes.recommendations
+      .map((resBook): Book | undefined => {
+        return suggestions.books.find((b): boolean => !!(b.id === resBook.id));
+      })
+      .filter(Boolean);
+    res.json(returnedSuggestions);
   } catch (suggestionGenerationError) {
     res
       .status(500)
@@ -39,16 +56,22 @@ router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.get('/', async (_: Request, res: Response): Promise<void> => {
-  const ssrr = await llmService.composeSuggestionStructuredResponseRequest([
-    'the witcher blood of the elves',
-    'the witcher ashen sword',
-    'Dune 2',
-  ]);
+router.get(
+  '/test/endpoint',
+  async (_: Request, res: Response): Promise<void> => {
+    const ssrr = await llmService.composeSuggestionStructuredResponseRequest([
+      { id: '1', name: 'the witcher blood of the elves' },
+      { id: '2', name: 'the witcher time of contempt' },
+      { id: '3', name: 'Dune 2' },
+      { id: '4', name: "Harry Potter and the Philosopher's Stone" },
+      { id: '5', name: 'Harry Potter and the Prisoner of Azkaban' },
+      { id: '7', name: 'Harry Potter and the Chamber of Secrets' },
+    ]);
 
-  const chatRes = await llmService.structuredChat(ssrr);
+    const chatRes = await llmService.structuredChat(ssrr);
 
-  res.json(chatRes);
-});
+    res.json(chatRes);
+  },
+);
 
 export default router;
