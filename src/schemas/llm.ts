@@ -73,6 +73,7 @@ export type StructuredResponse = {
 };
 
 export type BookRecommendationContent = {
+  id: string;
   name: string;
   description: string;
 };
