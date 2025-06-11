@@ -9,4 +9,5 @@ export const {
   DB_USER,
   DB_PASS,
   APP_PORT,
+  LLM_URL,
 } = process.env;
