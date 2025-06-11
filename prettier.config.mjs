@@ -1,7 +1,2 @@
-export default {
-  semi: true,
-  singleQuote: true,
-  trailingComma: 'all',
-  printWidth: 80,
-  tabWidth: 2,
-};
+import { prettierConfig } from "eslint-prettier-personal-config-ob"
+export default prettierConfig;

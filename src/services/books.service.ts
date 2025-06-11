@@ -1,19 +1,17 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import {
   SearchObject,
   SuccessfulGoogleResponse,
   Book,
 } from '../schemas/book.js';
 import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs.js';
+import { gracefullyStringfy } from '../utils/general.js';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
-const base = axios.create({
-  baseURL: GOOGLE_API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    Accept: '*/*',
-  },
-});
 
 type Paginate = {
   start: number;
@@ -21,7 +19,38 @@ type Paginate = {
 };
 
 export class BooksService {
-  constructor() {}
+  private client: AxiosInstance;
+  private basePath = GOOGLE_API_BASE_URL;
+
+  constructor(client?: AxiosInstance) {
+    if (client) {
+      this.client = client;
+    }
+
+    const axiosInstance = axios.create({
+      baseURL: this.basePath,
+      timeout: 10000,
+      headers: {
+        Accept: '*/*',
+      },
+    });
+
+    axiosInstance.interceptors.request.use(
+      (config): InternalAxiosRequestConfig => {
+        console.info(`
+METHOD: ${config.method}
+BASE PATH: ${config.baseURL}
+URL: ${config.url}
+BODY: ${gracefullyStringfy(config.data)}
+QUERY PARAMS: ${config.params}
+`);
+
+        return config;
+      },
+    );
+
+    this.client = axiosInstance;
+  }
 
   private addPostfix(url: string, paginate?: Paginate): string {
     return (
@@ -86,7 +115,7 @@ export class BooksService {
       const completeUrl = this.queryBuilder(search, volumeBase, paginate);
 
       const books: AxiosResponse<SuccessfulGoogleResponse> =
-        await base.get(completeUrl);
+        await this.client.get(completeUrl);
 
       return books.data;
     } catch (getBooksError) {
@@ -97,7 +126,8 @@ export class BooksService {
 
   public async getVolume(url: string): Promise<Book> {
     try {
-      const directRequestResponse: AxiosResponse<Book> = await axios.get(url);
+      const directRequestResponse: AxiosResponse<Book> =
+        await this.client.get(url);
       return directRequestResponse.data;
     } catch (getBookError) {
       throw new Error(`Error while getting book: ${getBookError}`);
