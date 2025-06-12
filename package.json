@@ -59,7 +59,7 @@
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.18.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.1",
+    "@types/node": "^24.0.1",
     "@types/uuid": "^10.0.0",
     "esbuild": "^0.24.0",
     "eslint-prettier-personal-config-ob": "^0.0.8",
