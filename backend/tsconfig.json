@@ -23,11 +23,15 @@
   },
   "exclude": [
     "node_modules",
-    "./eslint.config.mjs",
-    "./prettier.config.mjs",
-    "./build.js",
+    ".git",
+    ".github",
+    ".*mjs",
+    "*.js",
     "dist",
-    "./babel.config.js"
+    "./jest.config.js",
+    "./Dockerfile.backend",
+    "*.yml",
+    "*.json"
   ],
   "include": ["src/**/*.ts"]
 }

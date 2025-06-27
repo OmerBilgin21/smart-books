@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      # mirror your nodemonConfig.env but override DB_HOST
+      NODE_ENV: "debug"
+      DB_HOST: "db"
+      DB_PORT: 5432
+      DB_USER: omer
+      DB_PASS: root
+      POSTGRES_DB: smart_books_app
+      LLM_URL: "http://ollama:11434/api"
+      APP_PORT: 8000
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      - db
+      - ollama
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_BACKEND_URL: "http://localhost:8000" # or use network alias
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: omer
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: smart_books_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+      - /usr/lib/wsl/drivers:/usr/lib/wsl/drivers:ro
+      - /mnt/c/Users/oemer/.ollama/models:/root/.ollama/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  ollama:

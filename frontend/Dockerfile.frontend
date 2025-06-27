@@ -1,0 +1,27 @@
+# Stage 1: Builder
+FROM node:22.13.1 AS builder
+WORKDIR /app
+
+# Install deps
+COPY package*.json ./
+RUN npm install
+
+# Copy only source files
+COPY . .
+
+# Build the static site
+RUN npm run build
+
+# Stage 2: Minimal runtime with static file server
+FROM node:22.13.1-slim AS runtime
+WORKDIR /app
+
+# Install lightweight static server
+RUN npm install -g serve
+
+# Copy built app
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"]

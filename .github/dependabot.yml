@@ -8,6 +8,6 @@ updates:
     assignees:
       - 'OmerBilgin21'
   - package-ecosystem: 'github-actions'
-    directory: '/'
+    directory: '/backend'
     schedule:
       interval: 'daily'

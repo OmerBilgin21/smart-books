@@ -1,0 +1,21 @@
+version: "2.4"
+
+services:
+  ollamav2:
+    image: ollama/ollama
+    container_name: ollamav2
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+      - /usr/lib/wsl/drivers:/usr/lib/wsl/drivers:ro
+      - /mnt/c/Users/oemer/.ollama/models:/root/.ollama/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+
+volumes:
+  ollama:

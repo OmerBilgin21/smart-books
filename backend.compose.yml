@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend/
+      dockerfile: ./Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: "production"
+      LLM_URL: "http://localhost:11434/api"
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+      DB_PORT: 5432
+      DB_HOST: db
+      DB_USER: omer
+      DB_PASS: root
+      APP_PORT: 8000
+    depends_on:
+      - db
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+      - /usr/lib/wsl/drivers:/usr/lib/wsl/drivers:ro
+      - /mnt/c/Users/oemer/.ollama/models:/root/.ollama/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  frontend:
+    build:
+      context: ./frontend/
+      dockerfile: ./Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_URL: "http://localhost:8000"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: smart-books-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: omer
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: smart_books_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  ollama:
+  postgres-data:
