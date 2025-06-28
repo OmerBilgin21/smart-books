@@ -1,5 +1,5 @@
 import { LLM_URL } from '../infrastructure/envs.js';
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { AxiosInstance } from 'axios';
 import {
   BookRecommendationResponse,
   LLMModel,
@@ -9,6 +9,7 @@ import {
   StructuredResponseRequestFormat,
 } from '../schemas/llm';
 import { gracefullyStringfy } from '../utils/general.js';
+import { getApi } from '../infrastructure/api/api.base.js';
 
 export class LLMService {
   private readonly basePath = LLM_URL;
@@ -22,26 +23,11 @@ export class LLMService {
       this.client = client;
     }
 
-    const axiosInstance = axios.create({
-      baseURL: this.basePath,
-      timeout: 60000,
-    });
+    if (!this.basePath) {
+      throw new Error('Base URL for LLM API not found!');
+    }
 
-    axiosInstance.interceptors.request.use(
-      (config): InternalAxiosRequestConfig => {
-        console.info(`
-METHOD: ${config.method}
-BASE PATH: ${config.baseURL}
-URL: ${config.url}
-BODY: ${gracefullyStringfy(config.data)}
-QUERY PARAMS: ${config.params}
-`);
-
-        return config;
-      },
-    );
-
-    this.client = axiosInstance;
+    this.client = getApi({ baseURL: this.basePath, timeout: 60000 });
   }
 
   async composeSuggestionStructuredResponseRequest(

@@ -2,8 +2,12 @@ import { BaseRepository } from './base.repository.js';
 import { BookRecordCreate } from '../../schemas/book.record.js';
 import { BookRecord, User } from '../db/entities/index.js';
 import { BookRecordType } from '../db/entities/enums.js';
+import { BookRecordInterface } from '../../interfaces/book.records.interface.js';
 
-export class BookRecordsRepository extends BaseRepository {
+export class BookRecordsRepository
+  extends BaseRepository
+  implements BookRecordInterface
+{
   public async bulkCreate(
     bookRecords: BookRecordCreate[],
   ): Promise<BookRecord[]> {

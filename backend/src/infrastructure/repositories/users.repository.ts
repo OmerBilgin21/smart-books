@@ -4,8 +4,9 @@ import { UserCreate } from '../../schemas/user.js';
 import { validate } from 'uuid';
 
 import bcrypt from 'bcrypt';
+import { UsersInterface } from '../../interfaces/users.interface.js';
 
-export class UsersRepository extends BaseRepository {
+export class UsersRepository extends BaseRepository implements UsersInterface {
   public async create(user: UserCreate): Promise<User> {
     const repo = await this.getRepository(User);
     const salt = await bcrypt.genSalt(10);

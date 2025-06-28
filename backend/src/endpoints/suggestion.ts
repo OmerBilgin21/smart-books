@@ -68,8 +68,6 @@ router.get(
       { id: '7', name: 'Harry Potter and the Chamber of Secrets' },
     ]);
 
-    console.log(' WASSUP MY GUY ');
-
     const chatRes = await llmService.structuredChat(ssrr);
 
     res.json(chatRes);

@@ -1,15 +1,11 @@
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from 'axios';
+import { AxiosInstance, AxiosResponse } from 'axios';
 import {
   SearchObject,
   SuccessfulGoogleResponse,
   Book,
 } from '../schemas/book.js';
 import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs.js';
-import { gracefullyStringfy } from '../utils/general.js';
+import { getApi } from '../infrastructure/api/api.base.js';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
 
@@ -27,29 +23,14 @@ export class BooksService {
       this.client = client;
     }
 
-    const axiosInstance = axios.create({
+    if (!this.basePath) {
+      throw new Error('Base URL for Google Books API not found!');
+    }
+
+    this.client = getApi({
       baseURL: this.basePath,
       timeout: 10000,
-      headers: {
-        Accept: '*/*',
-      },
     });
-
-    axiosInstance.interceptors.request.use(
-      (config): InternalAxiosRequestConfig => {
-        console.info(`
-METHOD: ${config.method}
-BASE PATH: ${config.baseURL}
-URL: ${config.url}
-BODY: ${gracefullyStringfy(config.data)}
-QUERY PARAMS: ${config.params}
-`);
-
-        return config;
-      },
-    );
-
-    this.client = axiosInstance;
   }
 
   private addPostfix(url: string, paginate?: Paginate): string {

@@ -10,12 +10,12 @@ import {
   BookRecord,
   FavoriteCategory,
 } from '../infrastructure/db/entities/index.js';
-import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
-import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
-import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
 import { BookRecordType } from '../infrastructure/db/entities/enums.js';
 import { PlainUser } from '../schemas/user.js';
 import { BookRecordCreate } from '../schemas/book.record.js';
+import { BookRecordInterface } from '../interfaces/book.records.interface.js';
+import { FavoriteCategoriesInterface } from '../interfaces/favorite.categories.repository.js';
+import { UsersInterface } from '../interfaces/users.interface.js';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];
@@ -27,9 +27,9 @@ export class SuggestionService {
 
   constructor(
     private bookService: BooksService,
-    private bookRecordRepository: BookRecordsRepository,
-    private favoriteCategoriesRepository: FavoriteCategoriesRepository,
-    private usersRepository: UsersRepository,
+    private bookRecordRepository: BookRecordInterface,
+    private favoriteCategoriesRepository: FavoriteCategoriesInterface,
+    private usersRepository: UsersInterface,
   ) {}
 
   private async asyncInit(
