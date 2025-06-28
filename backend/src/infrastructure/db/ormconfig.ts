@@ -2,16 +2,14 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { config } from 'dotenv';
-import entities from './entities/index.js';
+import entities from './entities/index';
 import path from 'node:path';
-import url from 'node:url';
 
 config();
 
 const { DB_HOST, DB_PASS, DB_PORT, DB_USER } = process.env;
 
-const migrationsPath =
-  path.dirname(url.fileURLToPath(import.meta.url)) + '/migrations/**/*.ts';
+const migrationsPath = path.join(__dirname, 'migrations', '**', '*.ts');
 
 console.info('migrationsPath: ', migrationsPath);
 

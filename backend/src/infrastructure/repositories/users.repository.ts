@@ -1,10 +1,10 @@
-import { BaseRepository } from './base.repository.js';
-import { User } from '../db/entities/index.js';
-import { UserCreate } from '../../schemas/user.js';
+import { BaseRepository } from './base.repository';
+import { User } from '../db/entities/index';
+import { UserCreate } from '../../schemas/user';
 import { validate } from 'uuid';
 
 import bcrypt from 'bcrypt';
-import { UsersInterface } from '../../interfaces/users.interface.js';
+import { UsersInterface } from '../../interfaces/users.interface';
 
 export class UsersRepository extends BaseRepository implements UsersInterface {
   public async create(user: UserCreate): Promise<User> {

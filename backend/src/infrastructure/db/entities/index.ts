@@ -1,6 +1,6 @@
-import { User } from './user.js';
-import { FavoriteCategory } from './favorite.category.js';
-import { BookRecord } from './book.record.js';
+import { User } from './user';
+import { FavoriteCategory } from './favorite.category';
+import { BookRecord } from './book.record';
 
 export { User, FavoriteCategory, BookRecord };
 

@@ -6,8 +6,8 @@ import {
   ManyToOne,
   Unique,
 } from 'typeorm';
-import { BookRecordType } from './enums.js';
-import { User } from './user.js';
+import { BookRecordType } from './enums';
+import { User } from './user';
 
 @Unique('prevent_same_book_entry_for_same_type', [
   'selfLink',

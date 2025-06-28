@@ -1,5 +1,5 @@
 import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
-import { getDataSource } from '../db/ormconfig.js';
+import { getDataSource } from '../db/ormconfig';
 
 export class BaseRepository {
   private async getConnection(): Promise<DataSource> {

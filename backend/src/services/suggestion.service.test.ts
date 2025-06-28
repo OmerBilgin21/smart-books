@@ -1,15 +1,15 @@
-import { BooksService } from './books.service.js';
-import { SuggestionService } from './suggestion.service.js';
+import { BooksService } from './books.service';
+import { SuggestionService } from './suggestion.service';
 import {
   mockBooks,
   mockFavoriteCategories,
   mockUser,
   mockGoogleResponse,
-} from '../utils/mocks.js';
-import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
-import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
-import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
-import { Relevance } from '../schemas/book.js';
+} from '../utils/mocks';
+import { UsersRepository } from '../infrastructure/repositories/users.repository';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository';
+import { Relevance } from '../schemas/book';
 
 const mockFavoriteCategoriesService = {
   userFavoriteCategories: jest.fn(),

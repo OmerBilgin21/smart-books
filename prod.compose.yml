@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ./backend/
-      dockerfile: ./Dockerfile.backend
+      dockerfile: ./Dockerfile.prod
     ports:
       - "8000:8000"
     environment:
@@ -34,12 +34,12 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]
+            - capabilities: [ gpu ]
 
   frontend:
     build:
       context: ./frontend/
-      dockerfile: ./Dockerfile.frontend
+      dockerfile: ./Dockerfile.prod
     ports:
       - "3000:3000"
     environment:

@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { gracefullyStringfy } from '../../utils/general.js';
+import { gracefullyStringfy } from '../../utils/general';
 
 export const getApi = ({
   baseURL,

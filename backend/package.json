@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "smart book suggestions",
   "main": "app.js",
-  "type": "module",
   "engines": {
     "node": "22.13.1",
     "npm": "10.9.2"
@@ -14,9 +13,9 @@
     "prod": "npm run build && NODE_ENV=production node ./dist/app.js",
     "build": "rm -rf dist;npx tsc",
     "dev": "nodemon",
-    "m:generate": "typeorm-ts-node-esm migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
-    "m:run": "typeorm-ts-node-esm migration:run -d ./src/infrastructure/db/ormconfig.ts",
-    "m:show": "typeorm-ts-node-esm migration:show -d ./src/infrastructure/db/ormconfig.ts",
+    "m:generate": "npx ts-node ./node_modules/typeorm/cli.js migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
+    "m:run": "npx ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/infrastructure/db/ormconfig.ts",
+    "m:show": "npx ts-node ./node_modules/typeorm/cli.js migration:show -d ./src/infrastructure/db/ormconfig.ts",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "lint:ts": "npx tsc --noEmit",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
@@ -37,7 +36,7 @@
       "LLM_URL": "http://localhost:11434/api"
     },
     "ext": "ts",
-    "exec": "node --trace-warnings --loader ts-node/esm src/app.ts"
+    "exec": "ts-node src/app.ts"
   },
   "author": "Omer Bilgin",
   "license": "MIT",

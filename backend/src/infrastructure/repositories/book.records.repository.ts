@@ -1,8 +1,8 @@
-import { BaseRepository } from './base.repository.js';
-import { BookRecordCreate } from '../../schemas/book.record.js';
-import { BookRecord, User } from '../db/entities/index.js';
-import { BookRecordType } from '../db/entities/enums.js';
-import { BookRecordInterface } from '../../interfaces/book.records.interface.js';
+import { BaseRepository } from './base.repository';
+import { BookRecordCreate } from '../../schemas/book.record';
+import { BookRecord, User } from '../db/entities/index';
+import { BookRecordType } from '../db/entities/enums';
+import { BookRecordInterface } from '../../interfaces/book.records.interface';
 
 export class BookRecordsRepository
   extends BaseRepository

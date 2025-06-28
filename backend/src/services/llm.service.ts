@@ -1,4 +1,4 @@
-import { LLM_URL } from '../infrastructure/envs.js';
+import { LLM_URL } from '../infrastructure/envs';
 import { AxiosInstance } from 'axios';
 import {
   BookRecommendationResponse,
@@ -8,8 +8,8 @@ import {
   StructuredResponseRequest,
   StructuredResponseRequestFormat,
 } from '../schemas/llm';
-import { gracefullyStringfy } from '../utils/general.js';
-import { getApi } from '../infrastructure/api/api.base.js';
+import { gracefullyStringfy } from '../utils/general';
+import { getApi } from '../infrastructure/api/api.base';
 
 export class LLMService {
   private readonly basePath = LLM_URL;

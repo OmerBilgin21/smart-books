@@ -1,7 +1,7 @@
-import { BaseRepository } from './base.repository.js';
-import { FavoriteCategoryCreate } from '../../schemas/favorite.category.js';
-import { FavoriteCategory } from '../db/entities/index.js';
-import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.repository.js';
+import { BaseRepository } from './base.repository';
+import { FavoriteCategoryCreate } from '../../schemas/favorite.category';
+import { FavoriteCategory } from '../db/entities/index';
+import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.repository';
 
 export class FavoriteCategoriesRepository
   extends BaseRepository

@@ -1,6 +1,18 @@
 version: "2.4"
 
 services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: omer
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: smart_books_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   ollamav2:
     image: ollama/ollama
     container_name: ollamav2
@@ -18,4 +30,5 @@ services:
             - capabilities: [ gpu ]
 
 volumes:
+  postgres-data:
   ollama:

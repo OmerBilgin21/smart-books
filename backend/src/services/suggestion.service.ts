@@ -4,18 +4,18 @@ import {
   SuccessfulGoogleResponse,
   Relevance,
   SearchObject,
-} from '../schemas/book.js';
-import { BooksService } from './books.service.js';
+} from '../schemas/book';
+import { BooksService } from './books.service';
 import {
   BookRecord,
   FavoriteCategory,
-} from '../infrastructure/db/entities/index.js';
-import { BookRecordType } from '../infrastructure/db/entities/enums.js';
-import { PlainUser } from '../schemas/user.js';
-import { BookRecordCreate } from '../schemas/book.record.js';
-import { BookRecordInterface } from '../interfaces/book.records.interface.js';
-import { FavoriteCategoriesInterface } from '../interfaces/favorite.categories.repository.js';
-import { UsersInterface } from '../interfaces/users.interface.js';
+} from '../infrastructure/db/entities/index';
+import { BookRecordType } from '../infrastructure/db/entities/enums';
+import { PlainUser } from '../schemas/user';
+import { BookRecordCreate } from '../schemas/book.record';
+import { BookRecordInterface } from '../interfaces/book.records.interface';
+import { FavoriteCategoriesInterface } from '../interfaces/favorite.categories.repository';
+import { UsersInterface } from '../interfaces/users.interface';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];

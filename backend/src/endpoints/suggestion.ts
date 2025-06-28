@@ -1,11 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { BooksService } from '../services/books.service.js';
-import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository.js';
-import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
-import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository.js';
-import { SuggestionService } from '../services/suggestion.service.js';
-import { LLMService } from '../services/llm.service.js';
-import { Book } from '../schemas/book.js';
+import { BooksService } from '../services/books.service';
+import { BookRecordsRepository } from '../infrastructure/repositories/book.records.repository';
+import { UsersRepository } from '../infrastructure/repositories/users.repository';
+import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository';
+import { SuggestionService } from '../services/suggestion.service';
+import { LLMService } from '../services/llm.service';
 
 const router = Router();
 
@@ -30,22 +29,7 @@ router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
     const suggestions =
       await suggestionService.generateSuggestionsForUser(userId);
 
-    const payload = suggestions.books.map(
-      (sg): { id: string; name: string } => ({
-        id: sg.id,
-        name: sg.volumeInfo.title,
-      }),
-    );
-    const ssrr =
-      await llmService.composeSuggestionStructuredResponseRequest(payload);
-    const chatRes = await llmService.structuredChat(ssrr);
-
-    const returnedSuggestions = chatRes.recommendations
-      .map((resBook): Book | undefined => {
-        return suggestions.books.find((b): boolean => !!(b.id === resBook.id));
-      })
-      .filter(Boolean);
-    res.json(returnedSuggestions);
+    res.json(suggestions);
   } catch (suggestionGenerationError) {
     res
       .status(500)

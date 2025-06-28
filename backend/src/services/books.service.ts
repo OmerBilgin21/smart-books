@@ -1,11 +1,7 @@
 import { AxiosInstance, AxiosResponse } from 'axios';
-import {
-  SearchObject,
-  SuccessfulGoogleResponse,
-  Book,
-} from '../schemas/book.js';
-import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs.js';
-import { getApi } from '../infrastructure/api/api.base.js';
+import { SearchObject, SuccessfulGoogleResponse, Book } from '../schemas/book';
+import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs';
+import { getApi } from '../infrastructure/api/api.base';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
 

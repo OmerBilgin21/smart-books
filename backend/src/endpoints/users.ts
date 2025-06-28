@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { UsersRepository } from '../infrastructure/repositories/users.repository.js';
+import { UsersRepository } from '../infrastructure/repositories/users.repository';
 
 const router = Router();
 const userRepository = new UsersRepository();

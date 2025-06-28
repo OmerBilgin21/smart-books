@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import userRouter from '../endpoints/users.js';
-import booksRouter from '../endpoints/book.records.js';
-import favoriteCategoriesRouter from '../endpoints/favoriteCategories.js';
-import suggestionRouter from '../endpoints/suggestion.js';
-import bookRecordsRouter from '../endpoints/book.records.js';
+import userRouter from '../endpoints/users';
+import booksRouter from '../endpoints/book.records';
+import favoriteCategoriesRouter from '../endpoints/favoriteCategories';
+import suggestionRouter from '../endpoints/suggestion';
+import bookRecordsRouter from '../endpoints/book.records';
 
 export const routes: { router: Router; path: string }[] = [
   {
