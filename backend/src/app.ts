@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import express, { Express } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { APP_PORT } from './infrastructure/envs';
+import { APP_PORT, FE_URL } from './infrastructure/envs';
 import { routes } from './infrastructure/routes';
 
 export const app: Express = express();
@@ -10,7 +10,10 @@ export const app: Express = express();
 app.use(
   express.json(),
   express.urlencoded({ extended: true }),
-  cors(),
+  cors({
+    origin: FE_URL as string,
+    credentials: true,
+  }),
   cookieParser(),
 );
 
