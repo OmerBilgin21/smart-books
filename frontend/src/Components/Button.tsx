@@ -1,5 +1,5 @@
-import type { ComponentChildren } from "preact";
 import React from "react";
+import type { ComponentChildren } from "preact";
 
 export enum ButtonVariant {
   PRIMARY = "primary",
@@ -8,33 +8,39 @@ export enum ButtonVariant {
 
 type Props = {
   onClick?: () => void;
-  text: ComponentChildren;
+  children: ComponentChildren;
   variant?: ButtonVariant;
-};
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const Button: React.FC<Props> = ({
   onClick,
-  text,
+  children,
   variant = ButtonVariant.PRIMARY,
+  class: inheritedClass,
+  className,
+  ...rest
 }: Props) => {
   const theme = {
     [ButtonVariant.PRIMARY]:
-      "bg-brand-dark text:brand hover:bg-brand hover:text-brand-dark",
+      "bg-brand-dark text-white hover:bg-brand hover:text-brand-dark",
     [ButtonVariant.SECONDARY]:
-      "bg-brand text-brand-dark hover:bg-brand-dark hover:text-brand",
+      "bg-brand text-black hover:bg-brand-dark hover:text-brand",
   };
 
   return (
     <button
       class={`
-animate w-max h-max rounded-lg text-md font-semibold px-1 py-1
+animate w-max h-max rounded-lg text-md font-semibold px-2 py-1.5
 hover:mx-0.5 hover:cursor-pointer
-${typeof text === "string" && theme[variant]}
+${typeof children === "string" && theme[variant]}
+${inheritedClass && inheritedClass}
+${className && className}
 `}
       onClick={onClick}
       key={(Math.random() * 10).toString()}
+      {...rest}
     >
-      {text}
+      {children}
     </button>
   );
 };
