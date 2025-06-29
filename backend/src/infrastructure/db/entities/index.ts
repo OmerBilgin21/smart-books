@@ -1,6 +1,6 @@
-import { User } from './user';
-import { FavoriteCategory } from './favorite.category';
-import { BookRecord } from './book.record';
+import { User } from './user.entity';
+import { FavoriteCategory } from './favorite.category.entity';
+import { BookRecord } from './book.record.entity';
 
 export { User, FavoriteCategory, BookRecord };
 

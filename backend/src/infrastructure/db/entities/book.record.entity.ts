@@ -5,9 +5,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   Unique,
+  Index,
 } from 'typeorm';
 import { BookRecordType } from './enums';
-import { User } from './user';
+import { User } from './user.entity';
 
 @Unique('prevent_same_book_entry_for_same_type', [
   'selfLink',
@@ -23,6 +24,10 @@ export class BookRecord {
   @Column()
   selfLink: string;
 
+  @Index()
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
   @Column({
     type: 'enum',
     enum: BookRecordType,
@@ -33,6 +38,6 @@ export class BookRecord {
   @Column()
   googleId: string;
 
-  @ManyToOne(() => User, (user) => user.books)
+  @ManyToOne(() => User, (user) => user.books, { eager: true })
   user: User;
 }

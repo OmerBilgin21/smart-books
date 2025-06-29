@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { User } from './user';
+import { User } from './user.entity';
 
 @Entity('favorite_categories')
 export class FavoriteCategory {

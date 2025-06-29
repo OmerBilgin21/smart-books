@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { BookRecord } from './book.record';
-import { FavoriteCategory } from './favorite.category';
+import { BookRecord } from './book.record.entity';
+import { FavoriteCategory } from './favorite.category.entity';
 
 @Entity('users')
 export class User {
