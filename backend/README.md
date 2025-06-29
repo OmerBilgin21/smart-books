@@ -17,5 +17,5 @@ The rest of the environment variables are defined for the DEV environment, for p
 TODO:
 
 - [ ] Already read lists.
-- [ ] Like/dislike suggestions, consider on future suggestions
-- [ ] Implement a frecency (frequency + recency) to already read lists.
+- [ ] Implement a recency consideration to already read lists.
+- [ ] Implement a "users who liked this also liked this" thingy.
