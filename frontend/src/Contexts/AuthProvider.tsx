@@ -37,7 +37,6 @@ const AuthContextProvider = ({
       { success: "Signed In!", pending: "Signing In..." },
     );
 
-    console.log("user: ", user);
     if (user) {
       setUser(user);
       setIsAuthenticated(true);
@@ -45,8 +44,8 @@ const AuthContextProvider = ({
   };
 
   const signUp = async (user: User): Promise<void> => {
-    const { email, name, surname, password } = user;
-    if (!email || !name || !surname || !password) {
+    const { email, firstName, lastName, password } = user;
+    if (!email || !firstName || !lastName || !password) {
       window.alert("name, surname, email and password are required");
       return;
     }
@@ -56,8 +55,8 @@ const AuthContextProvider = ({
         usersApi,
         {
           data: {
-            name,
-            surname,
+            firstName,
+            lastName,
             password,
             email,
           },

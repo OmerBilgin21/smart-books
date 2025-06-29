@@ -1,6 +1,6 @@
 export type User = {
-  name: string;
-  surname: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password?: string;
   id?: number;

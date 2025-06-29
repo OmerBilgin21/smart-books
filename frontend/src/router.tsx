@@ -4,6 +4,7 @@ import LandingPage from "@components/LandingPage";
 import Notfound from "@components/NotFound";
 import HomePage from "@components/HomePage";
 import SignUp from "@components/SignUp.tsx";
+import Login from "@components/Login.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -27,5 +28,9 @@ export const router = createBrowserRouter([
   {
     path: "/signup",
     element: <SignUp />,
+  },
+  {
+    path: "/signin",
+    element: <Login />,
   },
 ]);

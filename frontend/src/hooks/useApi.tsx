@@ -84,15 +84,19 @@ export const useApi = () => {
       return Promise.reject(msg);
     }) as Promise<T>;
 
-    await toast.promise<T>(p, {
-      pending: messages.pending,
-      success: messages.success,
-      error: {
-        render({ data }): string {
-          return messages?.error ?? String(data);
-        },
-      } as UpdateOptions<unknown>,
-    });
+    await toast.promise<T>(
+      p,
+      {
+        pending: messages.pending,
+        success: messages.success,
+        error: {
+          render({ data }): string {
+            return messages?.error ?? String(data);
+          },
+        } as UpdateOptions<unknown>,
+      },
+      { autoClose: 1000, theme: "colored" },
+    );
 
     return p;
   }

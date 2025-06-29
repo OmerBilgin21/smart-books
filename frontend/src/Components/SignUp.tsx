@@ -20,7 +20,6 @@ const SignUp: React.FC<Props> = ({}: Props) => {
   const {
     register,
     handleSubmit: submitForm,
-    // watch,
     formState: { errors },
   } = useForm<FormProps>();
 
@@ -47,12 +46,8 @@ const SignUp: React.FC<Props> = ({}: Props) => {
       <form
         onSubmit={submitForm(handleSubmit)}
         className="w-full h-full cent text-white"
-        style={{ border: "4px solid red" }}
       >
-        <div
-          className="w-1/2 h-[80%] cent flex-col gap-16 bg-brand-dark rounded-xl"
-          style={{ border: "4px solid red" }}
-        >
+        <div className="w-1/2 h-[80%] cent flex-col gap-16 bg-brand-dark rounded-xl">
           <TextInput
             label="*First Name:"
             register={register}
