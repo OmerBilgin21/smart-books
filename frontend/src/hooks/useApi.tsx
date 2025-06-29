@@ -95,3 +95,14 @@ export const useApi = () => {
 
     return p;
   }
+
+  return {
+    rawRequest: request,
+    toastRequest: requestWithToast,
+    usersApi: createApi("users"),
+    booksApi: createApi("books"),
+    suggestionsApi: createApi("suggestions"),
+    favoritesApi: createApi("favorites"),
+    bookRecordsApi: createApi("book-records"),
+  };
+};
