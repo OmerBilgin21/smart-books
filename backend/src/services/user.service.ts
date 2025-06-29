@@ -1,6 +1,9 @@
 import { User } from '../infrastructure/db/entities';
 import { UsersInterface } from '../interfaces/users.interface';
-import { UserCreate } from '../schemas/user';
+import { AccessToken, UserCreate } from '../schemas/user';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import { SECRET_KEY } from '../infrastructure/envs';
 
 export class UserService {
   constructor(private repository: UsersInterface) {}
@@ -38,6 +41,7 @@ export class UserService {
       });
     });
   }
+
   async create(user: UserCreate): Promise<User> {
     return this.repository.create({
       ...user,
@@ -47,7 +51,14 @@ export class UserService {
 
   async get(identifier: string): Promise<User> {
     const user = await this.repository.get(identifier);
-    console.log('user: ', user);
     return user;
+  }
+
+  async login(email: string, password: string): Promise<User | null> {
+    const user = await this.get(email);
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    return isMatch ? user : null;
   }
 }
