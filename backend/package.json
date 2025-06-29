@@ -12,12 +12,11 @@
     "test": "jest",
     "prod": "npm run build && NODE_ENV=production node ./dist/app.js",
     "build": "rm -rf dist;npx tsc",
-    "dev": "nodemon",
+    "dev": "nodemon src/app.ts",
     "m:generate": "npx ts-node ./node_modules/typeorm/cli.js migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
     "m:run": "npx ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/infrastructure/db/ormconfig.ts",
     "m:show": "npx ts-node ./node_modules/typeorm/cli.js migration:show -d ./src/infrastructure/db/ormconfig.ts",
-    "lint": "eslint 'src/**/*.{ts,tsx}'",
-    "lint:ts": "npx tsc --noEmit",
+    "lint": "eslint 'src/**/*.{ts,tsx}' && npx tsc --noEmit",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx,js,json,md}'"
   },
@@ -36,7 +35,9 @@
       "LLM_URL": "http://localhost:11434/api"
     },
     "ext": "ts",
-    "exec": "ts-node src/app.ts"
+    "execMap": {
+      "ts": "ts-node"
+    }
   },
   "author": "Omer Bilgin",
   "license": "MIT",
