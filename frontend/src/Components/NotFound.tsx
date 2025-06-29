@@ -11,7 +11,7 @@ const NotFoun: React.FC = () => {
         onClick={() => {
           navigate("/");
         }}
-        text="Go back home"
+        children="Go back home"
       />
     </div>
   );
