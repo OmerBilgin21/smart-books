@@ -5,13 +5,12 @@ import { UserCreate } from '../schemas/user';
 export class UserService {
   constructor(private repository: UsersInterface) {}
 
-  async create(data: UserCreate): Promise<User> {
-    return this.repository.create(data);
   private hashPassword(password: string): string {
     const salt = bcrypt.genSaltSync(10);
 
     return bcrypt.hashSync(password, salt);
   }
+
   generateAccessToken(user: User): string {
     return jwt.sign(
       {
@@ -27,6 +26,18 @@ export class UserService {
     );
   }
 
+  async verifyToken(token: string): Promise<AccessToken> {
+    return new Promise<Promise<AccessToken>>((resolve, reject): void => {
+      jwt.verify(token, SECRET_KEY, (err: unknown, decoded: unknown): void => {
+        if (err) {
+          return reject(err ?? new Error('Invalid token payload'));
+        }
+
+        const payload = decoded as Promise<AccessToken>;
+        resolve(payload);
+      });
+    });
+  }
   async create(user: UserCreate): Promise<User> {
     return this.repository.create({
       ...user,
