@@ -58,3 +58,40 @@ export const useApi = () => {
       handleError(error);
     }
   }
+
+  async function requestWithToast<T>(
+    api: AxiosInstance,
+    config: AxiosRequestConfig,
+    messages: {
+      pending: string;
+      success: string;
+      error?: string;
+    },
+  ): Promise<T> {
+    const p = request<T>(api, config).catch((err: unknown) => {
+      let msg = "Unknown error";
+      if ((err as AxiosError).isAxiosError) {
+        const axiosErr = err as AxiosError<{ message?: string }>;
+        msg =
+          axiosErr.response?.data?.message ??
+          axiosErr.response?.statusText ??
+          axiosErr.message;
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
+
+      return Promise.reject(msg);
+    }) as Promise<T>;
+
+    await toast.promise<T>(p, {
+      pending: messages.pending,
+      success: messages.success,
+      error: {
+        render({ data }): string {
+          return messages?.error ?? String(data);
+        },
+      } as UpdateOptions<unknown>,
+    });
+
+    return p;
+  }
