@@ -11,3 +11,11 @@ export const gracefullyStringify = (input: unknown): string => {
     return "[Unserializable]";
   }
 };
+
+const createApi = (basePath: string): AxiosInstance => {
+  const instance = axios.create({
+    baseURL: `${API_URL}/${basePath}`,
+    timeout: 5000,
+    withCredentials: true,
+  });
+
