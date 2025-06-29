@@ -1,7 +1,6 @@
 import { BaseRepository } from './base.repository';
 import { User } from '../db/entities/index';
 import { UserCreate } from '../../schemas/user';
-import { validate } from 'uuid';
 
 import bcrypt from 'bcrypt';
 import { UsersInterface } from '../../interfaces/users.interface';
@@ -20,24 +19,20 @@ export class UsersRepository extends BaseRepository implements UsersInterface {
     return repo.save(ins);
   }
 
-  public async get(
-    identifier: string,
-  ): Promise<Omit<User, 'books' | 'categories'>> {
-    try {
-      const repo = await this.getRepository(User);
+  public async get(identifier: string): Promise<User> {
+    console.log('identifier: ', identifier);
+    const repo = await this.getRepository(User);
 
-      const qb = repo.createQueryBuilder('user');
+    const user = await repo.findOne({
+      where: [{ id: identifier }, { email: identifier }],
+      relations: ['books', 'categories'],
+    });
 
-      if (validate(identifier)) {
-        qb.where('user.id = :identifier', { identifier });
-      } else {
-        qb.where('user.email = :identifier', { identifier });
-      }
-
-      return await qb.getOneOrFail();
-    } catch (e) {
-      throw new Error(`User not found: ${e}`);
+    if (!user) {
+      throw new Error('not found');
     }
+
+    return user;
   }
 
   public async invalidateFreshness(identifier: string): Promise<User> {
@@ -52,6 +47,7 @@ export class UsersRepository extends BaseRepository implements UsersInterface {
   public async suggestionCalculated(identifier: string): Promise<User> {
     const repo = await this.getRepository(User);
     const user = await this.get(identifier);
+
     return repo.save({
       id: user.id,
       suggestionIsFresh: true,
