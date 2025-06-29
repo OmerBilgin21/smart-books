@@ -29,3 +29,17 @@ QUERY: ${gracefullyStringify(config.params)}
 `);
     return config;
   });
+
+  return instance;
+};
+
+const handleError = (error: unknown): never => {
+  if (axios.isAxiosError(error)) {
+    const err = error as AxiosError;
+    const ourServerError = (err.response?.data as { error?: string })?.error;
+    const msg = `${Boolean(ourServerError) ? ourServerError : `Error during request: ${err.message}`}`;
+    throw new Error(msg);
+  }
+
+  throw new Error(gracefullyStringify(error));
+};
