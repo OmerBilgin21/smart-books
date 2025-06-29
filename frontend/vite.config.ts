@@ -15,6 +15,7 @@ export default defineConfig({
       "react-dom": "preact/compact",
       "@assets": path.resolve(__dirname, "./src/assets"),
       "@components": path.resolve(__dirname, "./src/Components"),
+      "@contexts": path.resolve(__dirname, "./src/Contexts"),
     },
   },
 });
