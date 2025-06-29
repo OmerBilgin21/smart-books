@@ -43,6 +43,7 @@ const handleError = (error: unknown): never => {
 
   throw new Error(gracefullyStringify(error));
 };
+
 export const useApi = () => {
   async function request<T = unknown>(
     api: AxiosInstance,
