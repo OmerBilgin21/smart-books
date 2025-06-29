@@ -7,6 +7,11 @@ export class UserService {
 
   async create(data: UserCreate): Promise<User> {
     return this.repository.create(data);
+  private hashPassword(password: string): string {
+    const salt = bcrypt.genSaltSync(10);
+
+    return bcrypt.hashSync(password, salt);
+  }
   }
 
   async get(identifier: string): Promise<User> {
