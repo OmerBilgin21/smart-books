@@ -19,3 +19,13 @@ const createApi = (basePath: string): AxiosInstance => {
     withCredentials: true,
   });
 
+  instance.interceptors.request.use((config) => {
+    console.info(`
+[API Request]
+METHOD: ${config.method}
+URL: ${config.baseURL}${config.url}
+BODY: ${gracefullyStringify(config.data)}
+QUERY: ${gracefullyStringify(config.params)}
+`);
+    return config;
+  });
