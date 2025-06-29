@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
+import { UserService } from '../services/user.service';
 
 const router = Router();
-const userRepository = new UsersRepository();
+const userService = new UserService(new UsersRepository());
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   const data = req.body;
@@ -13,7 +14,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const created = await userRepository.create({
+    const created = await userService.create({
       email: data.email,
       lastName: data.lastName,
       firstName: data.lastName,
@@ -39,7 +40,7 @@ router.get(
     }
 
     try {
-      const found = await userRepository.get(emailOrId);
+      const found = await userService.get(emailOrId);
 
       res.json({
         email: found.email,
