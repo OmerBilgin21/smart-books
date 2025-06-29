@@ -7,6 +7,8 @@ updates:
     target-branch: 'master'
     assignees:
       - 'OmerBilgin21'
+    ignore:
+      - dependency-name: '@types/node'
   - package-ecosystem: 'github-actions'
     directory: '/backend'
     schedule:
