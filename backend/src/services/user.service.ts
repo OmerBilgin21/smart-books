@@ -12,6 +12,19 @@ export class UserService {
 
     return bcrypt.hashSync(password, salt);
   }
+  generateAccessToken(user: User): string {
+    return jwt.sign(
+      {
+        name: user.firstName,
+        surname: user.lastName,
+        id: user.id,
+        email: user.email,
+      },
+      SECRET_KEY,
+      {
+        expiresIn: '2 days',
+      },
+    );
   }
 
   async get(identifier: string): Promise<User> {
