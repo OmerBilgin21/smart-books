@@ -27,6 +27,13 @@ export class UserService {
     );
   }
 
+  async create(user: UserCreate): Promise<User> {
+    return this.repository.create({
+      ...user,
+      password: this.hashPassword(user.password),
+    });
+  }
+
   async get(identifier: string): Promise<User> {
     const user = await this.repository.get(identifier);
     console.log('user: ', user);
