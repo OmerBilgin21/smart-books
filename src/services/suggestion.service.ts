@@ -13,13 +13,15 @@ import {
 import { BookRecordType } from '../infrastructure/db/entities/enums';
 import { PlainUser } from '../schemas/user';
 import { BookRecordCreate } from '../schemas/book.record';
-import { BookRecordInterface } from '../interfaces/book.records.interface';
-import { FavoriteCategoriesInterface } from '../interfaces/favorite.categories.repository';
-import { UsersInterface } from '../interfaces/users.interface';
 import { logger } from '../utils/logger';
+import { LLMService } from './llm.service';
+import { UserService } from './user.service';
+import { BookRecordService } from './book.record.service';
+import { FavoriteCategoryService } from './favorite.category.service';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];
+  private favorites: BookRecord[] = [];
   private favoriteCategoriesFromBooks: string[] = [];
   private favoriteAuthors: string[] = [];
   private favoritePublishers: string[] = [];
@@ -28,26 +30,30 @@ export class SuggestionService {
 
   constructor(
     private bookService: BooksService,
-    private bookRecordRepository: BookRecordInterface,
-    private favoriteCategoriesRepository: FavoriteCategoriesInterface,
-    private usersRepository: UsersInterface,
+    private bookRecordService: BookRecordService,
+    private favoriteCategoryService: FavoriteCategoryService,
+    private userService: UserService,
+    private llmService: LLMService,
   ) {}
 
-  private async asyncInit(
-    userId: string,
-    favoritesOfUser: BookRecord[],
-  ): Promise<void> {
-    this.dislikes = await this.bookRecordRepository.getRecordsOfTypeForUser(
+  private async asyncInit(userId: string): Promise<void> {
+    const found = await this.userService.get(userId);
+    this.user = found;
+
+    this.favorites = await this.bookRecordService.getRecordsOfTypeForUser(
+      userId,
+      BookRecordType.FAVORITE,
+    );
+
+    this.dislikes = await this.bookRecordService.getRecordsOfTypeForUser(
       userId,
       BookRecordType.DISLIKE,
     );
 
     this.favoriteCategories =
-      await this.favoriteCategoriesRepository.getFavoriteCategoriesOfUser(
-        userId,
-      );
+      await this.favoriteCategoryService.getFavoriteCategoriesOfUser(userId);
 
-    const bookPromises = favoritesOfUser.map((favorite): Promise<Book> => {
+    const bookPromises = this.favorites.map((favorite): Promise<Book> => {
       return this.bookService.getVolume(favorite.selfLink);
     });
 
@@ -67,20 +73,16 @@ export class SuggestionService {
       .map((book): string | undefined | null => book.volumeInfo?.publisher)
       .filter((book): book is string => !!book);
 
-    this.user = await this.usersRepository.get(userId);
+    logger('models:', await this.llmService.getModels());
   }
 
   public async generateSuggestionsForUser(
     userId: string,
   ): Promise<SuggestionResult> {
     try {
-      const favoritesOfUser =
-        await this.bookRecordRepository.getRecordsOfTypeForUser(
-          userId,
-          BookRecordType.FAVORITE,
-        );
+      await this.asyncInit(userId);
 
-      if (!favoritesOfUser || !favoritesOfUser.length) {
+      if (!this.favorites || !this.favorites.length) {
         logger(
           'Can not generate suggestions for a user that does not have any favorites.',
         );
@@ -90,11 +92,9 @@ export class SuggestionService {
         };
       }
 
-      await this.asyncInit(userId, favoritesOfUser);
-
       if (this.user.suggestionIsFresh) {
         const alreadySuggestedRecords =
-          await this.bookRecordRepository.getRecordsOfTypeForUser(
+          await this.bookRecordService.getRecordsOfTypeForUser(
             userId,
             BookRecordType.SUGGESTION,
           );
@@ -116,7 +116,7 @@ export class SuggestionService {
 
       if (categoryAuthorCombination.books.length) {
         await this.saveSuggestion(userId, categoryAuthorCombination.books);
-        await this.usersRepository.suggestionCalculated(userId);
+        await this.userService.toggleFreshness(userId);
         return categoryAuthorCombination;
       }
 
@@ -124,7 +124,7 @@ export class SuggestionService {
 
       if (categoryOverloaded.books.length) {
         await this.saveSuggestion(userId, categoryOverloaded.books);
-        await this.usersRepository.suggestionCalculated(userId);
+        await this.userService.toggleFreshness(userId);
         return categoryOverloaded;
       }
 
@@ -132,7 +132,7 @@ export class SuggestionService {
 
       if (authorSuggestions.books.length) {
         await this.saveSuggestion(userId, authorSuggestions.books);
-        await this.usersRepository.suggestionCalculated(userId);
+        await this.userService.toggleFreshness(userId);
         return authorSuggestions;
       }
 
@@ -140,7 +140,7 @@ export class SuggestionService {
 
       if (publisherSuggestions.books.length) {
         await this.saveSuggestion(userId, publisherSuggestions.books);
-        await this.usersRepository.suggestionCalculated(userId);
+        await this.userService.toggleFreshness(userId);
         return publisherSuggestions;
       }
 
@@ -149,8 +149,8 @@ export class SuggestionService {
         books: [],
       };
     } catch (generateSuggestionError) {
-      if (this.user.suggestionIsFresh) {
-        await this.usersRepository.invalidateFreshness(userId);
+      if (this.user && this.user.suggestionIsFresh) {
+        await this.userService.toggleFreshness(userId);
       }
       throw new Error(
         `Error while generating suggestions for user: ${generateSuggestionError}`,
@@ -354,6 +354,6 @@ export class SuggestionService {
       };
     });
 
-    await this.bookRecordRepository.bulkCreate(creatableBookRecords);
+    await this.bookRecordService.bulkCreate(creatableBookRecords);
   }
 }
