@@ -22,7 +22,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       userId: data.userId,
       rank: data.rank,
     });
-    await usersRepository.invalidateFreshness(data.userId);
+    await usersRepository.toggleFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);
