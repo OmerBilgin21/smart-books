@@ -1,7 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: 'npm'
-    directory: '/backend'
     schedule:
       interval: 'daily'
     target-branch: 'master'
@@ -10,6 +9,5 @@ updates:
     ignore:
       - dependency-name: '@types/node'
   - package-ecosystem: 'github-actions'
-    directory: '/backend'
     schedule:
       interval: 'daily'
