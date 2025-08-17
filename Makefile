@@ -1,4 +1,4 @@
-.PHONY: up down restart logs-backend logs-frontend
+.PHONY: up down restart logs-backend logs-frontend backend-prod
 
 COMPOSE_FILE := dev.compose.yml
 DC := docker compose -f $(COMPOSE_FILE)
@@ -21,3 +21,7 @@ logs-backend:
 logs-frontend:
 	@echo "Tailing frontend logs…"
 	$(DC) logs -f frontend
+
+backend-prod:
+	@echo "Building and running the production server"
+	docker build -t smart-books-backend-prod -f Dockerfile.prod . --no-cache
