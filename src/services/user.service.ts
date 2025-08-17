@@ -3,8 +3,9 @@ import { UsersInterface } from '../interfaces/users.interface';
 import { AccessToken, UserCreate } from '../schemas/user';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { SECRET_KEY } from '../infrastructure/envs';
+import envs from '../infrastructure/envs';
 
+const { SECRET_KEY } = envs;
 export class UserService {
   constructor(private repository: UsersInterface) {}
 
@@ -29,6 +30,10 @@ export class UserService {
     );
   }
 
+  async toggleFreshness(identifier: string): Promise<User> {
+    return this.repository.toggleFreshness(identifier);
+  }
+
   async verifyToken(token: string): Promise<AccessToken> {
     return new Promise<Promise<AccessToken>>((resolve, reject): void => {
       jwt.verify(token, SECRET_KEY, (err: unknown, decoded: unknown): void => {
@@ -50,8 +55,7 @@ export class UserService {
   }
 
   async get(identifier: string): Promise<User> {
-    const user = await this.repository.get(identifier);
-    return user;
+    return this.repository.get(identifier);
   }
 
   async login(email: string, password: string): Promise<User | null> {
