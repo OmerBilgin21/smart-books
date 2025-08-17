@@ -1,6 +1,6 @@
 import { AxiosInstance, AxiosResponse } from 'axios';
 import { SearchObject, SuccessfulGoogleResponse, Book } from '../schemas/book';
-import { GOOGLE_BOOKS_API_KEY } from '../infrastructure/envs';
+import envs from '../infrastructure/envs';
 import { getApi } from '../infrastructure/api/api.base';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
@@ -32,7 +32,7 @@ export class BooksService {
   private addPostfix(url: string, paginate?: Paginate): string {
     return (
       this.addPagination(url, paginate) +
-      `&printType=books&langRestrict=en&key=${GOOGLE_BOOKS_API_KEY}`
+      `&printType=books&langRestrict=en&key=${envs.GOOGLE_BOOKS_API_KEY}`
     );
   }
 
