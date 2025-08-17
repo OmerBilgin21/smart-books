@@ -1,4 +1,3 @@
-import { LLM_URL } from '../infrastructure/envs';
 import { AxiosInstance } from 'axios';
 import {
   BookRecommendationResponse,
@@ -10,9 +9,10 @@ import {
 } from '../schemas/llm';
 import { gracefullyStringfy } from '../utils/general';
 import { getApi } from '../infrastructure/api/api.base';
+import envs from '../infrastructure/envs';
 
 export class LLMService {
-  private readonly basePath = LLM_URL;
+  private readonly basePath = envs.LLM_URL;
   private readonly chatEndpoint = '/chat';
   private readonly modelsEndpoint = '/tags';
   private readonly modelChoice = 'all-minillm:latest';
@@ -55,7 +55,7 @@ export class LLMService {
       messages: [
         {
           role: 'user',
-          content: `You are a helpful book assistant. User wants to find some new books to read. According to their read list, likes and dislikes, we have gathered some possible matches (in stringified JSON structure): ${gracefullyStringfy(suggestionList)}. Sort these books by popularity DESC. If: * you think you have a better match for the user than most popular 5 books in the list by evaluating the list, * there are not enough (less than 5) suggestions found by us, * one of the suggestions could be considered redundant or duplicate, * a number of suggested books are completely irrelevant to the others, come up with your own (real, existing) book suggestions by checking your knowledge-base and put them in the appropriate location at the popularity sorted list. If a name is incomplete or you can enrich it to a more acceptable state, do so. Return a JSON object array of 5 length with name and description fields description field must contains a brief summary of the book topic/description. Do not touch the ID you receive for each book. Return it as you received it.`,
+          content: `User wants to find some new books to read. According to their read list, likes and dislikes, we have gathered some possible matches (in stringified JSON structure): ${gracefullyStringfy(suggestionList)}. Sort these books by popularity DESC. If: * you think you have a better match for the user than most popular 5 books in the list by evaluating the list, * there are not enough (less than 5) suggestions found by us, * one of the suggestions could be considered redundant or duplicate, * a number of suggested books are completely irrelevant to the others, come up with your own (real, existing) book suggestions by checking your knowledge-base and put them in the appropriate location at the popularity sorted list. If a name is incomplete or you can enrich it to a more acceptable state, do so. Return a JSON object array of 5 length with name and description fields description field must contains a brief summary of the book topic/description. Do not touch the ID you receive for each book. Return it as you received it.`,
         },
       ],
       stream: false,
