@@ -21,14 +21,14 @@ export type LLMModelsResponse = {
 };
 
 export type StructuredResponseRequestMessage = {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 };
 
 export type StructuredResponseRequestFormat = {
-  type: 'object' | 'array';
-  properties: Record<string, StructuredResponseRequestFormat>;
-  required: Array<string>;
+  type: string;
+  properties: Record<string, unknown>;
+  required?: Array<string>;
 };
 
 export type StructuredResponseRequestOptions = {

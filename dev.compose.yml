@@ -1,13 +1,12 @@
-# for my personal use for the moment
 version: "3.9"
 
 services:
   backend:
     build:
-      context: ./backend
+      context: ./
       dockerfile: Dockerfile.dev
     volumes:
-      - ./backend:/app
+      - ./:/app
     ports:
       - "8000:8000"
     environment:
@@ -26,17 +25,17 @@ services:
       - ollama
     restart: unless-stopped
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "3000:3000"
-    environment:
-      VITE_BACKEND_URL: "http://localhost:8000"
-    restart: unless-stopped
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./frontend:/app
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     VITE_BACKEND_URL: "http://localhost:8000"
+  #   restart: unless-stopped
 
   db:
     image: postgres:16
@@ -55,6 +54,8 @@ services:
     ports:
       - "11434:11434"
     volumes:
+      # :D, I can't or rather don't want to re-mount entire llm models.
+      # Therefore here are my local files
       - ollama:/root/.ollama
       - /usr/lib/wsl/drivers:/usr/lib/wsl/drivers:ro
       - /mnt/c/Users/oemer/.ollama/models:/root/.ollama/models:ro

@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
 import { UserService } from '../services/user.service';
-import { NODE_ENV } from '../infrastructure/envs';
+import envs from '../infrastructure/envs';
 import { User } from '../infrastructure/db/entities';
 import { logger } from '../utils/logger';
 
 const router = Router();
 const userService = new UserService(new UsersRepository());
+const { NODE_ENV } = envs;
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   const data = req.body;
@@ -54,7 +55,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 
     res.json({
       email: decodedToken.email,
-      firstName: decodedToken.firstName,
+      firstName: decodedToken.name,
       id: decodedToken.id,
     });
   } catch {

@@ -3,9 +3,10 @@ import { BookRecordsRepository } from '../infrastructure/repositories/book.recor
 import { unexpectedError } from '../infrastructure/constants';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
 import { BookRecordType } from '../infrastructure/db/entities/enums';
+import { BookRecordService } from '../services/book.record.service';
 
 const router = Router();
-const bookRecordsRepository = new BookRecordsRepository();
+const bookRecordsService = new BookRecordService(new BookRecordsRepository());
 const usersRepository = new UsersRepository();
 
 router.post('/dislike', async (req: Request, res: Response): Promise<void> => {
@@ -17,13 +18,13 @@ router.post('/dislike', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const created = await bookRecordsRepository.create({
+    const created = await bookRecordsService.create({
       userId: data.userId,
       selfLink: data.selfLink,
       type: BookRecordType.DISLIKE,
       googleId: data.googleId,
     });
-    await usersRepository.invalidateFreshness(data.userId);
+    await usersRepository.toggleFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);
@@ -41,7 +42,7 @@ router.get(
     }
 
     try {
-      const dislikedBook = await bookRecordsRepository.getRecordsOfTypeForUser(
+      const dislikedBook = await bookRecordsService.getRecordsOfTypeForUser(
         userId as string,
         BookRecordType.DISLIKE,
       );
@@ -62,13 +63,13 @@ router.post('/favorite', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const created = await bookRecordsRepository.create({
+    const created = await bookRecordsService.create({
       userId: data.userId,
       googleId: data.googleId,
       selfLink: data.selfLink,
       type: BookRecordType.FAVORITE,
     });
-    await usersRepository.invalidateFreshness(data.userId);
+    await usersRepository.toggleFreshness(data.userId);
     res.json(created);
   } catch (createError) {
     res.status(500).json(unexpectedError);
@@ -86,7 +87,7 @@ router.get(
     }
 
     try {
-      const dislikedBook = await bookRecordsRepository.getRecordsOfTypeForUser(
+      const dislikedBook = await bookRecordsService.getRecordsOfTypeForUser(
         userId as string,
         BookRecordType.FAVORITE,
       );

@@ -32,22 +32,12 @@ export class UsersRepository extends BaseRepository implements UsersInterface {
     return user;
   }
 
-  public async invalidateFreshness(identifier: string): Promise<User> {
+  public async toggleFreshness(identifier: string): Promise<User> {
     const repo = await this.getRepository(User);
     const user = await this.get(identifier);
     return repo.save({
       ...user,
-      suggestionIsFresh: false,
-    });
-  }
-
-  public async suggestionCalculated(identifier: string): Promise<User> {
-    const repo = await this.getRepository(User);
-    const user = await this.get(identifier);
-
-    return repo.save({
-      id: user.id,
-      suggestionIsFresh: true,
+      suggestionIsFresh: !user.suggestionIsFresh,
     });
   }
 }

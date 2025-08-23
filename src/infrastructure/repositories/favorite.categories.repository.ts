@@ -1,7 +1,7 @@
 import { BaseRepository } from './base.repository';
 import { FavoriteCategoryCreate } from '../../schemas/favorite.category';
 import { FavoriteCategory } from '../db/entities/index';
-import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.repository';
+import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.interface';
 
 export class FavoriteCategoriesRepository
   extends BaseRepository

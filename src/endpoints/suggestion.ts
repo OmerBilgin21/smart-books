@@ -5,17 +5,22 @@ import { UsersRepository } from '../infrastructure/repositories/users.repository
 import { FavoriteCategoriesRepository } from '../infrastructure/repositories/favorite.categories.repository';
 import { SuggestionService } from '../services/suggestion.service';
 import { LLMService } from '../services/llm.service';
+import { logger } from '../utils/logger';
+import { UserService } from '../services/user.service';
+import { BookRecordService } from '../services/book.record.service';
+import { FavoriteCategoryService } from '../services/favorite.category.service';
 
 const router = Router();
 
+const llmService = new LLMService();
+
 const suggestionService = new SuggestionService(
   new BooksService(),
-  new BookRecordsRepository(),
-  new FavoriteCategoriesRepository(),
-  new UsersRepository(),
+  new BookRecordService(new BookRecordsRepository()),
+  new FavoriteCategoryService(new FavoriteCategoriesRepository()),
+  new UserService(new UsersRepository()),
+  llmService,
 );
-
-const llmService = new LLMService();
 
 router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
@@ -53,6 +58,7 @@ router.get(
     ]);
 
     const chatRes = await llmService.structuredChat(ssrr);
+    logger('chatRes: ', chatRes);
 
     res.json(chatRes);
   },
