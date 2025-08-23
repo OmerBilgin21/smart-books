@@ -5,17 +5,23 @@ import {
   LLMModelsResponse,
   StructuredResponse,
   StructuredResponseRequest,
-  StructuredResponseRequestFormat,
 } from '../schemas/llm';
 import { gracefullyStringfy } from '../utils/general';
 import { getApi } from '../infrastructure/api/api.base';
 import envs from '../infrastructure/envs';
+import { logger } from '../utils/logger';
 
 export class LLMService {
   private readonly basePath = envs.LLM_URL;
   private readonly chatEndpoint = '/chat';
   private readonly modelsEndpoint = '/tags';
-  private readonly modelChoice = 'all-minillm:latest';
+  private readonly modelChoice = 'llama3.2:latest';
+  private readonly basePrompt =
+    'User wants to find some new books to read. \
+    You will assist them with this. \
+    You will be given some categories or books to base your suggestions off of.\
+    Always recommend only real, existing books from your knowledge-base.';
+  private readonly maxRetry = 5;
   private client: AxiosInstance;
 
   constructor(client?: AxiosInstance) {
@@ -48,14 +54,23 @@ export class LLMService {
           return model;
         }
         return undefined;
-      }) || modelsResponse.models[0];
+      }) ?? modelsResponse.models[0];
 
     return {
       model: model.name,
       messages: [
         {
+          role: 'system',
+          content: this.basePrompt,
+        },
+        {
+          role: 'system',
+          content: `The following list of books were gathered as possible matches for user (in stringified JSON structure): \
+          ${gracefullyStringfy(suggestionList)}. If asked, you can use these books as a base to generate your own suggestions.`,
+        },
+        {
           role: 'user',
-          content: `User wants to find some new books to read. According to their read list, likes and dislikes, we have gathered some possible matches (in stringified JSON structure): ${gracefullyStringfy(suggestionList)}. Sort these books by popularity DESC. If: * you think you have a better match for the user than most popular 5 books in the list by evaluating the list, * there are not enough (less than 5) suggestions found by us, * one of the suggestions could be considered redundant or duplicate, * a number of suggested books are completely irrelevant to the others, come up with your own (real, existing) book suggestions by checking your knowledge-base and put them in the appropriate location at the popularity sorted list. If a name is incomplete or you can enrich it to a more acceptable state, do so. Return a JSON object array of 5 length with name and description fields description field must contains a brief summary of the book topic/description. Do not touch the ID you receive for each book. Return it as you received it.`,
+          content: 'Please give me 5 books to read.',
         },
       ],
       stream: false,
@@ -79,7 +94,7 @@ export class LLMService {
           },
         },
         required: ['recommendations'],
-      } as unknown as StructuredResponseRequestFormat,
+      },
       options: {
         temperature: 0,
       },
@@ -87,12 +102,12 @@ export class LLMService {
   }
 
   async getModels(): Promise<LLMModelsResponse> {
-    const res = await this.client.get<LLMModelsResponse>(this.modelsEndpoint);
-    return res.data;
+    return (await this.client.get<LLMModelsResponse>(this.modelsEndpoint)).data;
   }
 
   async structuredChat(
     prompt: StructuredResponseRequest,
+    retryCount = 0,
   ): Promise<BookRecommendationResponse> {
     try {
       const res = await this.client.post<StructuredResponse>(
@@ -107,7 +122,22 @@ export class LLMService {
 
       return JSON.parse(res.data.message.content);
     } catch (err) {
-      throw new Error(`Error while generating a structured response: ${err}`);
+      if (err instanceof SyntaxError && retryCount < this.maxRetry) {
+        const newPrompt: StructuredResponseRequest = {
+          ...prompt,
+          messages: [
+            ...prompt.messages,
+            {
+              role: 'system',
+              content:
+                'Your response must be valid JSON matching the expected schema. Retry.',
+            },
+          ],
+        };
+        return this.structuredChat(newPrompt, retryCount + 1);
+      }
+      logger('Error while generating a structured response', err);
+      throw err;
     }
   }
 }
