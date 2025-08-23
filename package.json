@@ -12,9 +12,9 @@
     "prod": "npm run build && NODE_ENV=production node ./dist/app.js",
     "build": "rm -rf dist;npx tsc",
     "dev": "nodemon src/app.ts",
-    "m:generate": "npx ts-node ./node_modules/typeorm/cli.js migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
-    "m:run": "npx ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/infrastructure/db/ormconfig.ts",
-    "m:show": "npx ts-node ./node_modules/typeorm/cli.js migration:show -d ./src/infrastructure/db/ormconfig.ts",
+    "m:g": "npx ts-node ./node_modules/typeorm/cli.js migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
+    "m:r": "npx ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/infrastructure/db/ormconfig.ts",
+    "m:s": "npx ts-node ./node_modules/typeorm/cli.js migration:show -d ./src/infrastructure/db/ormconfig.ts",
     "lint": "eslint 'src/**/*.{ts,tsx}' && npx tsc --noEmit",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx,js,json,md}'"
@@ -32,7 +32,8 @@
       "APP_PORT": 8000,
       "DB_PORT": 5432,
       "LLM_URL": "http://localhost:11434/api",
-      "FE_URL": "http://localhost:3000"
+      "FE_URL": "http://localhost:3000",
+      "APP_HOST": "0.0.0.0"
     },
     "ext": "ts",
     "execMap": {
@@ -50,7 +51,7 @@
     "dotenv": "^16.5.0",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1",
+    "pg": "^8.16.3",
     "typeorm": "^0.3.20",
     "typeorm-naming-strategies": "^4.1.0",
     "uuid": "^11.0.5"

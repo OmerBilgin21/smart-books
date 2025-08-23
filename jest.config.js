@@ -1,6 +1,8 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-export default {
+/* eslint-disable */
+module.exports = {
   preset: 'ts-jest/presets/default-esm', // Use ESM mode
+  setupFiles: ['<rootDir>/jest.env.setup.js'],
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
