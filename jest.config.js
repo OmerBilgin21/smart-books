@@ -1,5 +1,6 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-export default {
+/* eslint-disable */
+module.exports = {
   preset: 'ts-jest/presets/default-esm', // Use ESM mode
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
