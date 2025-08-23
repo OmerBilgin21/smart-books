@@ -5,7 +5,7 @@ DC := docker compose -f $(COMPOSE_FILE)
 
 up:
 	@echo "Bringing services up…"
-	$(DC) up -d
+	$(DC) up --build -d
 
 down:
 	@echo "Tearing services down…"
