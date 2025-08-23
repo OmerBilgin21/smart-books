@@ -37,8 +37,7 @@ export class SuggestionService {
   ) {}
 
   private async asyncInit(userId: string): Promise<void> {
-    const found = await this.userService.get(userId);
-    this.user = found;
+    this.user = await this.userService.get(userId);
 
     this.favorites = await this.bookRecordService.getRecordsOfTypeForUser(
       userId,
