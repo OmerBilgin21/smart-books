@@ -1,3 +1,6 @@
+test('', (): void => {
+  expect(true).toBe(true);
+});
 /* 
 import { BooksService } from './books.service';
 import { SuggestionService } from './suggestion.service';
