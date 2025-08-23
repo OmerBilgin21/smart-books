@@ -9,8 +9,6 @@
   "engineStrict": true,
   "scripts": {
     "test": "jest",
-    "prod": "npm run build && NODE_ENV=production node ./dist/app.js",
-    "build": "rm -rf dist;npx tsc",
     "dev": "nodemon src/app.ts",
     "m:g": "ts-node ./node_modules/typeorm/cli.js migration:generate ./src/infrastructure/db/migrations/$npm_config_name -d ./src/infrastructure/db/ormconfig.ts",
     "m:r": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/infrastructure/db/ormconfig.ts",
