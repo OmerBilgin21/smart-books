@@ -14,13 +14,9 @@ down:
 restart: down up
 	@echo "Restart complete."
 
-logs-backend:
+logs:
 	@echo "Tailing backend logs…"
 	$(DC) logs -f backend
-
-logs-frontend:
-	@echo "Tailing frontend logs…"
-	$(DC) logs -f frontend
 
 backend-prod:
 	@echo "Building and running the production server"
