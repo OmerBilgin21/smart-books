@@ -54,6 +54,8 @@ services:
     ports:
       - "11434:11434"
     volumes:
+      # :D, I can't or rather don't want to re-mount entire llm models.
+      # Therefore here are my local files
       - ollama:/root/.ollama
       - /usr/lib/wsl/drivers:/usr/lib/wsl/drivers:ro
       - /mnt/c/Users/oemer/.ollama/models:/root/.ollama/models:ro
