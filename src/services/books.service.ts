@@ -2,6 +2,7 @@ import { AxiosInstance, AxiosResponse } from 'axios';
 import { SearchObject, SuccessfulGoogleResponse, Book } from '../schemas/book';
 import envs from '../infrastructure/envs';
 import { getApi } from '../infrastructure/api/api.base';
+import { isEmpty, isNotEmpty } from '../utils/general';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
 
@@ -31,17 +32,23 @@ export class BooksService {
   }
 
   private buildParams(search: SearchObject[], paginate?: Paginate): string {
-    const q = search
+    const actually = search.filter((s): boolean => isNotEmpty(s.value));
+
+    if (isEmpty(actually)) {
+      throw new Error('No valid search term');
+    }
+
+    const q = actually
       .map((s): string => {
         switch (s.term) {
           case 'authors':
-            return `inauthor:${s.value}`;
+            return `inauthor:${s.value.split(' ').join('+').toLowerCase()}`;
           case 'title':
-            return `intitle:${s.value}`;
+            return `intitle:${s.value.split(' ').join('+').toLowerCase()}`;
           case 'subject':
-            return `subject:${s.value}`;
+            return `subject:${s.value.split(' ').join('+').toLowerCase()}`;
           case 'publisher':
-            return `inpublisher:${s.value}`;
+            return `inpublisher:${s.value.split(' ').join('+').toLowerCase()}`;
           default:
             throw new Error('Invalid search term');
         }
