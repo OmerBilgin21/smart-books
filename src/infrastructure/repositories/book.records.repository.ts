@@ -3,6 +3,7 @@ import { BookRecordCreate } from '../../schemas/book.record';
 import { BookRecord, User } from '../db/entities/index';
 import { BookRecordType } from '../db/entities/enums';
 import { BookRecordInterface } from '../../interfaces/book.records.interface';
+import { isNotNullish } from '../../utils/general';
 
 export class BookRecordsRepository
   extends BaseRepository
@@ -109,20 +110,16 @@ export class BookRecordsRepository
   public async getRecordsOfTypeForUser(
     userId: string,
     type: BookRecordType,
+    take?: number,
   ): Promise<BookRecord[]> {
-    try {
-      const repo = await this.getRepository(BookRecord);
-      return await repo
-        .createQueryBuilder('book_records')
-        .where(
-          'book_records.user = :identifier AND book_records.type = :bookRecordType',
-          { identifier: userId, bookRecordType: type },
-        )
-        .getMany();
-    } catch {
-      throw new Error(
-        `Book record for user: ${userId} not found for type: ${type}`,
-      );
-    }
+    const repo = await this.getRepository(BookRecord);
+
+    return repo.find({
+      where: {
+        id: userId,
+        type,
+      },
+      ...(isNotNullish(take) && { take }),
+    });
   }
 }
