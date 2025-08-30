@@ -20,8 +20,14 @@ export type LLMModelsResponse = {
   models: Array<LLMModel>;
 };
 
+export enum LLMChatRoles {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system',
+}
+
 export type StructuredResponseRequestMessage = {
-  role: 'user' | 'assistant' | 'system';
+  role: LLMChatRoles;
   content: string;
 };
 
@@ -73,7 +79,6 @@ export type StructuredResponse = {
 };
 
 export type BookRecommendationContent = {
-  id: string;
   name: string;
   description: string;
 };
