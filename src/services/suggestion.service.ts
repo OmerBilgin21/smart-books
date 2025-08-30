@@ -13,11 +13,12 @@ import {
 import { BookRecordType } from '../infrastructure/db/entities/enums';
 import { PlainUser } from '../schemas/user';
 import { BookRecordCreate } from '../schemas/book.record';
-import { logger } from '../utils/logger';
 import { LLMService } from './llm.service';
 import { UserService } from './user.service';
 import { BookRecordService } from './book.record.service';
 import { FavoriteCategoryService } from './favorite.category.service';
+import { isEmpty, isNotEmpty, isNotNullish } from '../utils/general';
+import { logger } from '../utils/logger';
 
 export class SuggestionService {
   private dislikes: BookRecord[] = [];
@@ -71,8 +72,16 @@ export class SuggestionService {
     this.favoritePublishers = favoriteBooks
       .map((book): string | undefined | null => book.volumeInfo?.publisher)
       .filter((book): book is string => !!book);
+  }
 
-    logger('models:', await this.llmService.getModels());
+  userDataNotValid(): boolean {
+    return (
+      isEmpty(this.dislikes) &&
+      isEmpty(this.favorites) &&
+      isEmpty(this.favoriteCategoriesFromBooks) &&
+      isEmpty(this.favoriteAuthors) &&
+      isEmpty(this.favoriteCategories)
+    );
   }
 
   public async generateSuggestionsForUser(
@@ -81,13 +90,51 @@ export class SuggestionService {
     try {
       await this.asyncInit(userId);
 
-      if (!this.favorites || !this.favorites.length) {
-        logger(
-          'Can not generate suggestions for a user that does not have any favorites.',
+      if (this.userDataNotValid()) {
+        const llmSuggestions = await this.llmService.getGenericSuggestions(
+          [] as string[],
         );
+
+        if (isEmpty(llmSuggestions.recommendations)) {
+          return {
+            relevance: Relevance.VERY_BAD,
+            books: [],
+          };
+        }
+
+        const bookPromises = llmSuggestions.recommendations.map(
+          (ls): Promise<SuccessfulGoogleResponse> => {
+            const search: SearchObject[] = [
+              {
+                term: 'title',
+                value: ls.name,
+              },
+            ];
+            return this.bookService.getVolumes(search, { start: 0, limit: 1 });
+          },
+        );
+
+        const bookResponses = await Promise.all(bookPromises);
+        const books = {
+          items: bookResponses.flatMap(
+            (response): Book[] => response.items || [],
+          ),
+          totalItems: bookResponses.reduce(
+            (total, response): number => total + response.totalItems,
+            0,
+          ),
+        };
+
+        logger('books: ', books);
+        const final = books.items ?? [];
+
+        if (isNotEmpty(final)) {
+          await this.userService.toggleFreshness(this.user.id);
+        }
+
         return {
-          relevance: Relevance.NO_SUGGESTION,
-          books: [],
+          relevance: Relevance.BAD,
+          books: final,
         };
       }
 
@@ -96,6 +143,7 @@ export class SuggestionService {
           await this.bookRecordService.getRecordsOfTypeForUser(
             userId,
             BookRecordType.SUGGESTION,
+            25,
           );
 
         const bookPromises = alreadySuggestedRecords.map(
@@ -148,7 +196,7 @@ export class SuggestionService {
         books: [],
       };
     } catch (generateSuggestionError) {
-      if (this.user && this.user.suggestionIsFresh) {
+      if (isNotNullish(this.user) && this.user.suggestionIsFresh) {
         await this.userService.toggleFreshness(userId);
       }
       throw new Error(
