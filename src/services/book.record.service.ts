@@ -15,7 +15,8 @@ export class BookRecordService {
   async getRecordsOfTypeForUser(
     userId: string,
     type: BookRecordType,
+    take?: number,
   ): Promise<BookRecord[]> {
-    return this.repository.getRecordsOfTypeForUser(userId, type);
+    return this.repository.getRecordsOfTypeForUser(userId, type, take);
   }
 }

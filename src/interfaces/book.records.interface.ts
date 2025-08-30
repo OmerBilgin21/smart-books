@@ -8,5 +8,6 @@ export interface BookRecordInterface {
   getRecordsOfTypeForUser(
     userId: string,
     type: BookRecordType,
+    take?: number,
   ): Promise<BookRecord[]>;
 }
