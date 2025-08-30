@@ -26,7 +26,7 @@ export class UsersRepository extends BaseRepository implements UsersInterface {
     });
 
     if (!user) {
-      throw new Error('not found');
+      throw new Error('User not found');
     }
 
     return user;
