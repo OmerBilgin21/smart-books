@@ -39,8 +39,9 @@ router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
     res
       .status(500)
       .json({ error: 'Error while generating suggestions for user' });
-    throw new Error(
-      `Error while generating suggestions for user ${userId}.\n${suggestionGenerationError}`,
+    logger(
+      `Error while generating suggestions for user ${userId}.`,
+      suggestionGenerationError,
     );
   }
 });
@@ -48,19 +49,9 @@ router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
 router.get(
   '/test/endpoint',
   async (_: Request, res: Response): Promise<void> => {
-    const ssrr = await llmService.composeSuggestionStructuredResponseRequest([
-      { id: '1', name: 'the witcher blood of the elves' },
-      { id: '2', name: 'the witcher time of contempt' },
-      { id: '3', name: 'Dune 2' },
-      { id: '4', name: "Harry Potter and the Philosopher's Stone" },
-      { id: '5', name: 'Harry Potter and the Prisoner of Azkaban' },
-      { id: '7', name: 'Harry Potter and the Chamber of Secrets' },
-    ]);
+    logger('chatRes: ');
 
-    const chatRes = await llmService.structuredChat(ssrr);
-    logger('chatRes: ', chatRes);
-
-    res.json(chatRes);
+    res.json({});
   },
 );
 
