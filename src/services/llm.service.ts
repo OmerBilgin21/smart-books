@@ -147,7 +147,6 @@ export class LLMService {
       );
 
       const parsed = JSON.parse(res.data.message.content);
-      console.log('parsed: ', parsed);
 
       return parsed;
     } catch (err) {
