@@ -1,7 +1,8 @@
 import { BaseRepository } from './base.repository';
 import { FavoriteCategoryCreate } from '../../schemas/favorite.category';
-import { FavoriteCategory } from '../db/entities/index';
+import { FavoriteCategory, User } from '../db/entities/index';
 import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.interface';
+import { isNullish } from '../../utils/general';
 
 export class FavoriteCategoriesRepository
   extends BaseRepository
@@ -11,22 +12,23 @@ export class FavoriteCategoriesRepository
     favoriteCategory: FavoriteCategoryCreate,
   ): Promise<FavoriteCategory> {
     const repo = await this.getRepository(FavoriteCategory);
-    return repo.save({
-      ...favoriteCategory,
-      user: {
-        id: favoriteCategory.userId,
-      },
+    const userRepo = await this.getRepository(User);
+
+    const user = await userRepo.findOne({
+      where: { id: favoriteCategory.userId },
     });
+
+    if (isNullish(user)) {
+      throw new Error('User does not exist to create a favorite category for');
+    }
+
+    return repo.save(favoriteCategory);
   }
 
   public async getFavoriteCategoriesOfUser(
     userId: string,
   ): Promise<FavoriteCategory[]> {
     const repo = await this.getRepository(FavoriteCategory);
-    return repo.findBy({
-      user: {
-        id: userId,
-      },
-    });
+    return repo.find({ where: { userId } });
   }
 }
