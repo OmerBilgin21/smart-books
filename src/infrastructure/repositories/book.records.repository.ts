@@ -12,69 +12,33 @@ export class BookRecordsRepository
   public async bulkCreate(
     bookRecords: BookRecordCreate[],
   ): Promise<BookRecord[]> {
-    const uniqueIds: string[] = [];
-    const uniqueCreateObjs: Omit<BookRecordCreate, 'userId'>[] = [];
-
-    const thisRepo = await this.getRepository(BookRecord);
+    const repo = await this.getRepository(BookRecord);
     const usersRepo = await this.getRepository(User);
 
-    const {
-      books: _,
-      categories: __,
-      ...user
-    } = await usersRepo.findOneOrFail({
+    if (new Set(bookRecords.map((r): string => r.userId)).size !== 1) {
+      throw new Error(
+        'Bulk creation of book records for multiple users is forbidden!',
+      );
+    }
+
+    const user = await usersRepo.findOne({
       where: {
         id: bookRecords[0].userId,
       },
     });
 
     if (!user) {
-      throw new Error('Given user could not be found!');
+      throw new Error('User not found');
     }
 
-    for (const bookRecord of bookRecords) {
-      if (!uniqueIds.includes(bookRecord.googleId)) {
-        uniqueIds.push(bookRecord.googleId);
-        const { userId: _userId, ...rest } = bookRecord;
-        uniqueCreateObjs.push(rest);
-      }
-    }
-
-    const qb = thisRepo.createQueryBuilder('book_records');
-
-    const rawRecords = await qb
-      .select('book_records.googleId')
-      .where(
-        'book_records.user = :userId AND book_records.type = :type AND book_records.googleId IN (:...googleIds)',
-        { userId: user.id, type: bookRecords[0].type, googleIds: uniqueIds },
-      )
-      .getRawMany();
-
-    const existingIds = rawRecords.map((row): string => row.googleId);
-
-    uniqueCreateObjs.forEach((record, idx): void => {
-      if (existingIds.includes(record.googleId)) {
-        existingIds.splice(idx, 1);
-      }
-    });
-
-    const promises = uniqueCreateObjs.map((record): Promise<BookRecord> => {
-      const beforeCreate = {
-        ...record,
-        user,
-      };
-
-      return thisRepo.save(beforeCreate);
-    });
-
-    return await Promise.all(promises);
+    return repo.save(bookRecords);
   }
 
   public async create(bookRecord: BookRecordCreate): Promise<BookRecord> {
-    const thisRepo = await this.getRepository(BookRecord);
+    const repo = await this.getRepository(BookRecord);
     const usersRepo = await this.getRepository(User);
 
-    const user = await usersRepo.findOneOrFail({
+    const user = await usersRepo.findOne({
       where: {
         id: bookRecord.userId,
       },
@@ -84,14 +48,11 @@ export class BookRecordsRepository
       throw new Error('Given user could not be found!');
     }
 
-    const existingRecord = await thisRepo.findOne({
+    const existingRecord = await repo.findOne({
       where: {
         type: bookRecord.type,
-        user: {
-          id: bookRecord.userId,
-        },
+        userId: bookRecord.userId,
         googleId: bookRecord.googleId,
-        selfLink: bookRecord.selfLink,
       },
     });
 
@@ -99,12 +60,7 @@ export class BookRecordsRepository
       return existingRecord;
     }
 
-    const { userId: _userId, ...rest } = bookRecord;
-
-    return thisRepo.save({
-      ...rest,
-      user,
-    });
+    return repo.save(bookRecord);
   }
 
   public async getRecordsOfTypeForUser(
