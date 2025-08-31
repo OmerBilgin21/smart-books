@@ -6,12 +6,7 @@ import {
   SearchObject,
 } from '../schemas/book';
 import { BooksService } from './books.service';
-import {
-  BookRecord,
-  FavoriteCategory,
-} from '../infrastructure/db/entities/index';
 import { BookRecordType } from '../infrastructure/db/entities/enums';
-import { PlainUser } from '../schemas/user';
 import { BookRecordCreate } from '../schemas/book.record';
 import { LLMService } from './llm.service';
 import { UserService } from './user.service';
@@ -26,9 +21,10 @@ import {
 } from '../utils/general';
 import { logger } from '../utils/logger';
 import { validate } from 'uuid';
+import { User, BookRecord, FavoriteCategory } from '../schemas';
 
 type UserData = {
-  user: PlainUser;
+  user: User;
   dislikes: BookRecord[];
   favoriteCategories: FavoriteCategory[];
   favoriteBooks: Book[];
@@ -129,9 +125,7 @@ export class SuggestionService {
       });
 
       if (this.userDataNotValid(userData)) {
-        const llmSuggestions = await this.llmService.getGenericSuggestions(
-          [] as string[],
-        );
+        const llmSuggestions = await this.llmService.getGenericSuggestions([]);
 
         if (isEmpty(llmSuggestions.recommendations)) {
           return {
