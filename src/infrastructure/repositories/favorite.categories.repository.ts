@@ -1,6 +1,6 @@
 import { BaseRepository } from './base.repository';
 import { FavoriteCategoryCreate } from '../../schemas/favorite.category';
-import { FavoriteCategory, User } from '../db/entities/index';
+import { FavoriteCategory, User } from '../db/entities';
 import { FavoriteCategoriesInterface } from '../../interfaces/favorite.categories.interface';
 import { isNullish } from '../../utils/general';
 
