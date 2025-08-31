@@ -45,19 +45,21 @@ export const gracefullyStringfy = <T>(param: T): string | T => {
 };
 
 export const processAsyncTaskInBatch = async <T>(
-  promises: Promise<T>[],
+  promises: (() => Promise<T>)[],
   batchSize: number,
 ): Promise<T[]> => {
   try {
+    const delayAmount = 1;
     const results: T[] = [];
     for (let i = 0; i < promises.length; i += batchSize) {
       const batch = promises.slice(i, i + batchSize);
 
-      const batchResults = await Promise.all(batch);
+      const batchResults = await Promise.all(batch.map((b): Promise<T> => b()));
       results.push(...batchResults);
 
       if (i + batchSize < promises.length) {
-        await delay(1);
+        logger(`WILL WAIT BEFORE NEXT BATCH FOR ${delayAmount} SECOND(s)`);
+        await delay(delayAmount);
       }
     }
     return results;
