@@ -3,6 +3,7 @@ import { SearchObject, SuccessfulGoogleResponse, Book } from '../schemas/book';
 import envs from '../infrastructure/envs';
 import { getApi } from '../infrastructure/api/api.base';
 import { isEmpty, isNotEmpty } from '../utils/general';
+import { logger } from '../utils/logger';
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/books/v1';
 
@@ -81,7 +82,8 @@ export class BooksService {
 
       return books.data;
     } catch (getBooksError) {
-      throw new Error(`Error while getting books:\n ${getBooksError}`);
+      logger('Error while getting books', getBooksError);
+      throw getBooksError;
     }
   }
 
@@ -91,7 +93,8 @@ export class BooksService {
         await this.client.get(url);
       return directRequestResponse.data;
     } catch (getBookError) {
-      throw new Error(`Error while getting book: ${getBookError}`);
+      logger('Error while getting book', getBookError);
+      throw getBookError;
     }
   }
 }
