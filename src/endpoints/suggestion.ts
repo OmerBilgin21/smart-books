@@ -9,6 +9,8 @@ import { logger } from '../utils/logger';
 import { UserService } from '../services/user.service';
 import { BookRecordService } from '../services/book.record.service';
 import { FavoriteCategoryService } from '../services/favorite.category.service';
+import { validate } from '../utils/validation.middleware';
+import { SuggestionParamsSchema } from '../schemas';
 
 const router = Router();
 
@@ -22,35 +24,32 @@ const suggestionService = new SuggestionService(
   llmService,
 );
 
-router.get('/:userId', async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.params;
+router.get(
+  '/:userId',
+  validate({ params: SuggestionParamsSchema }),
+  async (req: Request, res: Response): Promise<void> => {
+    const { userId } = req.params;
 
-  if (!userId) {
-    res.json({ error: 'Please provide a user ID' });
-    return;
-  }
+    try {
+      const suggestions =
+        await suggestionService.generateSuggestionsForUser(userId);
 
-  try {
-    const suggestions =
-      await suggestionService.generateSuggestionsForUser(userId);
-
-    res.json(suggestions);
-  } catch (suggestionGenerationError) {
-    res
-      .status(500)
-      .json({ error: 'Error while generating suggestions for user' });
-    logger(
-      `Error while generating suggestions for user ${userId}.`,
-      suggestionGenerationError,
-    );
-  }
-});
+      res.json(suggestions);
+    } catch (suggestionGenerationError) {
+      logger(
+        `Error while generating suggestions for user ${userId}.`,
+        suggestionGenerationError,
+      );
+      res
+        .status(500)
+        .json({ error: 'Error while generating suggestions for user' });
+    }
+  },
+);
 
 router.get(
   '/test/endpoint',
   async (_: Request, res: Response): Promise<void> => {
-    logger('chatRes: ');
-
     res.json({});
   },
 );
