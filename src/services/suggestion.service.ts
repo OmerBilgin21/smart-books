@@ -11,7 +11,6 @@ import { BookRecordCreate } from '../schemas/book.record';
 import { LLMService } from './llm.service';
 import { UserService } from './user.service';
 import { BookRecordService } from './book.record.service';
-import { FavoriteCategoryService } from './favorite.category.service';
 import {
   isEmpty,
   isNotEmpty,
@@ -37,7 +36,6 @@ export class SuggestionService {
   constructor(
     private bookService: BooksService,
     private bookRecordService: BookRecordService,
-    private favoriteCategoryService: FavoriteCategoryService,
     private userService: UserService,
     private llmService: LLMService,
   ) {}
@@ -45,9 +43,8 @@ export class SuggestionService {
   public async asyncInit(userId: string): Promise<UserData> {
     const user = await this.userService.get(userId);
 
-    const favorites = await this.bookRecordService.getRecordsOfTypeForUser(
-      userId,
-      BookRecordType.FAVORITE,
+    const favorites = user.books.filter(
+      (book): boolean => book.type === BookRecordType.FAVORITE,
     );
 
     const dislikes = await this.bookRecordService.getRecordsOfTypeForUser(
@@ -55,11 +52,10 @@ export class SuggestionService {
       BookRecordType.DISLIKE,
     );
 
-    const favoriteCategories =
-      await this.favoriteCategoryService.getFavoriteCategoriesOfUser(userId);
+    const favoriteCategories = user.favoriteCategories;
 
-    const bookPromises = favorites.map((favorite): Promise<Book> => {
-      return this.bookService.getVolume(favorite.selfLink);
+    const bookPromises = favorites.map((favorite): (() => Promise<Book>) => {
+      return (): Promise<Book> => this.bookService.getVolume(favorite.selfLink);
     });
 
     const favoriteBooks = await processAsyncTaskInBatch(bookPromises, 5);
@@ -182,6 +178,8 @@ export class SuggestionService {
       }
 
       if (userData.user.suggestionIsFresh) {
+        logger(`suggestions are fresh for user, they will be returned`, userId);
+
         const alreadySuggestedRecords =
           await this.bookRecordService.getRecordsOfTypeForUser(
             userId,
@@ -190,8 +188,9 @@ export class SuggestionService {
           );
 
         const bookPromises = alreadySuggestedRecords.map(
-          (book): Promise<Book> => {
-            return this.bookService.getVolume(book.selfLink);
+          (book): (() => Promise<Book>) => {
+            return (): Promise<Book> =>
+              this.bookService.getVolume(book.selfLink);
           },
         );
 
@@ -513,11 +512,11 @@ export class SuggestionService {
     queries: SearchObject[][],
     dislikes: UserData['dislikes'],
   ): Promise<Book[]> {
-    const bookPromises: Promise<SuccessfulGoogleResponse>[] = [];
-
-    for (const query of queries) {
-      bookPromises.push(this.bookService.getVolumes(query));
-    }
+    const bookPromises: (() => Promise<SuccessfulGoogleResponse>)[] =
+      queries.map((query) => {
+        return (): Promise<SuccessfulGoogleResponse> =>
+          this.bookService.getVolumes(query);
+      });
 
     const responseNestedArr = await processAsyncTaskInBatch(bookPromises, 5);
 
