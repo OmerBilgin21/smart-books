@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { config } from 'dotenv';
-import entities from './entities/index';
+import entities from './entities';
 import path from 'node:path';
 import { logger } from '../../utils/logger';
 
