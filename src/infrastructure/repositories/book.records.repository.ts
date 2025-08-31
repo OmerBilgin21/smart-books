@@ -104,7 +104,7 @@ export class BookRecordsRepository
 
     return repo.find({
       where: {
-        id: userId,
+        userId,
         type,
       },
       ...(isNotNullish(take) && { take }),
