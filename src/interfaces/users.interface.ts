@@ -1,5 +1,4 @@
-import { User } from '../infrastructure/db/entities';
-import { UserCreate } from '../schemas/user';
+import { UserCreate, User } from '../schemas';
 
 export interface UsersInterface {
   create(user: UserCreate): Promise<User>;
