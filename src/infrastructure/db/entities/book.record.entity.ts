@@ -10,12 +10,7 @@ import {
 import { BookRecordType } from './enums';
 import { User } from './user.entity';
 
-@Unique('prevent_same_book_entry_for_same_type', [
-  'selfLink',
-  'googleId',
-  'type',
-  'user',
-])
+@Unique('prevent_same_book_entry_for_same_type', ['googleId', 'type', 'user'])
 @Entity('book_records')
 export class BookRecord {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +23,7 @@ export class BookRecord {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: BookRecordType,
@@ -35,9 +31,12 @@ export class BookRecord {
   })
   type: BookRecordType;
 
+  @Index()
   @Column()
   googleId: string;
 
-  @ManyToOne(() => User, (user) => user.books, { eager: true })
+  @ManyToOne(() => User, (user) => user.books, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 }

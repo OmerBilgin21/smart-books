@@ -10,9 +10,14 @@ export class FavoriteCategory {
   @Column()
   name: string;
 
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
   @Column({ type: 'integer' })
   rank: number;
 
-  @ManyToOne(() => User, (user: User) => user.categories)
+  @ManyToOne(() => User, (user: User) => user.categories, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 }

@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  Index,
+} from 'typeorm';
 import { BookRecord } from './book.record.entity';
 import { FavoriteCategory } from './favorite.category.entity';
 
@@ -19,12 +25,17 @@ export class User {
   @Column({ default: false })
   suggestionIsFresh: boolean;
 
+  @Index()
   @Column({ unique: true })
   email: string;
 
-  @OneToMany('BookRecord', 'user')
+  @OneToMany('BookRecord', 'user', {
+    eager: false,
+  })
   books: BookRecord[];
 
-  @OneToMany('FavoriteCategory', 'user')
+  @OneToMany('FavoriteCategory', 'user', {
+    eager: false,
+  })
   categories: FavoriteCategory[];
 }
