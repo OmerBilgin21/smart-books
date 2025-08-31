@@ -17,8 +17,15 @@ import { LLMService } from './llm.service';
 import { UserService } from './user.service';
 import { BookRecordService } from './book.record.service';
 import { FavoriteCategoryService } from './favorite.category.service';
-import { isEmpty, isNotEmpty, isNotNullish } from '../utils/general';
+import {
+  isEmpty,
+  isNotEmpty,
+  isNotNullish,
+  isNullish,
+  processAsyncTaskInBatch,
+} from '../utils/general';
 import { logger } from '../utils/logger';
+import { validate } from 'uuid';
 
 type UserData = {
   user: PlainUser;
@@ -59,7 +66,7 @@ export class SuggestionService {
       return this.bookService.getVolume(favorite.selfLink);
     });
 
-    const favoriteBooks = await Promise.all(bookPromises);
+    const favoriteBooks = await processAsyncTaskInBatch(bookPromises, 5);
 
     const favoriteAuthors = favoriteBooks.flatMap(
       (book): string[] => book.volumeInfo.authors,
@@ -107,6 +114,14 @@ export class SuggestionService {
     userId: string,
   ): Promise<SuggestionResult> {
     try {
+      if (!validate(userId)) {
+        logger('Given user ID is not a UUID!', userId);
+        return {
+          relevance: Relevance.NO_SUGGESTION,
+          books: [],
+        };
+      }
+
       const userData = await this.asyncInit(userId);
       logger(`Suggestion generation for user: ${userId} started.`, {
         ...userData,
@@ -136,7 +151,24 @@ export class SuggestionService {
           },
         );
 
-        const bookResponses = await Promise.all(bookPromises);
+        // here it's fine to do a promise all since we process only 5 books anyway
+        const bookResponses = await Promise.all(bookPromises).catch(
+          (error): null => {
+            logger(
+              'Error while retrieving the suggestions of LLM from API',
+              error,
+            );
+            return null;
+          },
+        );
+
+        if (isNullish(bookResponses)) {
+          return {
+            books: [],
+            relevance: Relevance.NO_SUGGESTION,
+          };
+        }
+
         const books = {
           items: bookResponses.flatMap(
             (response): Book[] => response.items || [],
@@ -169,9 +201,11 @@ export class SuggestionService {
           },
         );
 
+        const books = await processAsyncTaskInBatch(bookPromises, 5);
+
         return {
           relevance: Relevance.NO_SUGGESTION,
-          books: await Promise.all(bookPromises),
+          books: books,
         };
       }
 
@@ -222,9 +256,16 @@ export class SuggestionService {
       if (isNotNullish(user) && user.suggestionIsFresh) {
         await this.userService.toggleFreshness(userId);
       }
-      throw new Error(
-        `Error while generating suggestions for user: ${generateSuggestionError}`,
+
+      logger(
+        'Error while generating suggestions for user',
+        generateSuggestionError,
       );
+
+      return {
+        relevance: Relevance.NO_SUGGESTION,
+        books: [],
+      };
     }
   }
 
@@ -264,7 +305,23 @@ export class SuggestionService {
         value: publisher,
       }),
     );
-    const results = await this.bookService.getVolumes(publisherQuery);
+
+    const results = await this.bookService
+      .getVolumes(publisherQuery)
+      .catch((error): null => {
+        logger(
+          'Error while retireving the publisher suggestions from API',
+          error,
+        );
+        return null;
+      });
+
+    if (isNullish(results)) {
+      return {
+        relevance: Relevance.NO_SUGGESTION,
+        books: [],
+      };
+    }
 
     return {
       relevance: Relevance.VERY_BAD,
@@ -281,7 +338,21 @@ export class SuggestionService {
         value: author,
       }),
     );
-    const results = await this.bookService.getVolumes(authorQueryObj);
+
+    const results = await this.bookService
+      .getVolumes(authorQueryObj)
+      .catch((error): null => {
+        logger('Error while retrieving author suggestions', error);
+        return null;
+      });
+
+    if (isNullish(results)) {
+      return {
+        relevance: Relevance.NO_SUGGESTION,
+        books: [],
+      };
+    }
+
     return {
       relevance: Relevance.MEDIOCRE,
       books: results.items,
@@ -364,6 +435,13 @@ export class SuggestionService {
 
     const lessRelevantResults = await this.bookService.getVolumes(singulars);
 
+    if (isNullish(lessRelevantResults)) {
+      return {
+        relevance: Relevance.NO_SUGGESTION,
+        books: [],
+      };
+    }
+
     return {
       relevance: Relevance.BAD,
       books: lessRelevantResults.items,
@@ -435,7 +513,7 @@ export class SuggestionService {
       bookPromises.push(this.bookService.getVolumes(query));
     }
 
-    const responseNestedArr = await Promise.all(bookPromises);
+    const responseNestedArr = await processAsyncTaskInBatch(bookPromises, 5);
 
     const books = responseNestedArr
       .filter((record): boolean => record.totalItems > 0)
@@ -448,7 +526,7 @@ export class SuggestionService {
     books: Book[],
     dislikes: UserData['dislikes'],
   ): Book[] {
-    if (isNotEmpty(dislikes)) {
+    if (isEmpty(dislikes)) {
       return books;
     }
 
