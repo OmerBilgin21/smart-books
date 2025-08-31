@@ -1,3 +1,4 @@
+import { z } from 'zod';
 export type SearchTerms = 'authors' | 'title' | 'publisher' | 'subject';
 
 export type SearchObject = {
@@ -83,3 +84,17 @@ export type SuggestionResult = {
   relevance: Relevance;
   books: Book[];
 };
+
+export const BookSearchQuerySchema = z.object({
+  q: z.string().min(1, 'Search query is required'),
+  startIndex: z
+    .string()
+    .transform((val): number => parseInt(val, 10))
+    .pipe(z.number().int().min(0))
+    .optional(),
+  maxResults: z
+    .string()
+    .transform((val): number => parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(40))
+    .optional(),
+});
