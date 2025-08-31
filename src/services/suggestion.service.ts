@@ -20,15 +20,17 @@ import { FavoriteCategoryService } from './favorite.category.service';
 import { isEmpty, isNotEmpty, isNotNullish } from '../utils/general';
 import { logger } from '../utils/logger';
 
-export class SuggestionService {
-  private dislikes: BookRecord[] = [];
-  private favorites: BookRecord[] = [];
-  private favoriteCategoriesFromBooks: string[] = [];
-  private favoriteAuthors: string[] = [];
-  private favoritePublishers: string[] = [];
-  private favoriteCategories: FavoriteCategory[] = [];
-  private user: PlainUser;
+type UserData = {
+  user: PlainUser;
+  dislikes: BookRecord[];
+  favoriteCategories: FavoriteCategory[];
+  favoriteBooks: Book[];
+  favoriteAuthors: string[];
+  favoriteCategoriesFromBooks: string[];
+  favoritePublishers: string[];
+};
 
+export class SuggestionService {
   constructor(
     private bookService: BooksService,
     private bookRecordService: BookRecordService,
@@ -37,50 +39,67 @@ export class SuggestionService {
     private llmService: LLMService,
   ) {}
 
-  private async asyncInit(userId: string): Promise<void> {
-    this.user = await this.userService.get(userId);
+  public async asyncInit(userId: string): Promise<UserData> {
+    const user = await this.userService.get(userId);
 
-    this.favorites = await this.bookRecordService.getRecordsOfTypeForUser(
+    const favorites = await this.bookRecordService.getRecordsOfTypeForUser(
       userId,
       BookRecordType.FAVORITE,
     );
 
-    this.dislikes = await this.bookRecordService.getRecordsOfTypeForUser(
+    const dislikes = await this.bookRecordService.getRecordsOfTypeForUser(
       userId,
       BookRecordType.DISLIKE,
     );
 
-    this.favoriteCategories =
+    const favoriteCategories =
       await this.favoriteCategoryService.getFavoriteCategoriesOfUser(userId);
 
-    const bookPromises = this.favorites.map((favorite): Promise<Book> => {
+    const bookPromises = favorites.map((favorite): Promise<Book> => {
       return this.bookService.getVolume(favorite.selfLink);
     });
 
     const favoriteBooks = await Promise.all(bookPromises);
 
-    this.favoriteAuthors = favoriteBooks.flatMap(
+    const favoriteAuthors = favoriteBooks.flatMap(
       (book): string[] => book.volumeInfo.authors,
     );
 
-    this.favoriteCategoriesFromBooks = favoriteBooks.flatMap((book): string[] =>
-      book.volumeInfo.categories.map((category): string => {
-        return category;
-      }),
+    const favoriteCategoriesFromBooks = favoriteBooks.flatMap(
+      (book): string[] =>
+        book.volumeInfo.categories.map((category): string => {
+          return category;
+        }),
     );
 
-    this.favoritePublishers = favoriteBooks
+    const favoritePublishers = favoriteBooks
       .map((book): string | undefined | null => book.volumeInfo?.publisher)
       .filter((book): book is string => !!book);
+
+    return {
+      user,
+      dislikes,
+      favoriteCategories,
+      favoriteBooks,
+      favoriteAuthors,
+      favoriteCategoriesFromBooks,
+      favoritePublishers,
+    };
   }
 
-  userDataNotValid(): boolean {
+  userDataNotValid({
+    dislikes,
+    favoriteAuthors,
+    favoriteCategories,
+    favoriteBooks,
+    favoriteCategoriesFromBooks,
+  }: UserData): boolean {
     return (
-      isEmpty(this.dislikes) &&
-      isEmpty(this.favorites) &&
-      isEmpty(this.favoriteCategoriesFromBooks) &&
-      isEmpty(this.favoriteAuthors) &&
-      isEmpty(this.favoriteCategories)
+      isEmpty(dislikes) &&
+      isEmpty(favoriteBooks) &&
+      isEmpty(favoriteCategoriesFromBooks) &&
+      isEmpty(favoriteAuthors) &&
+      isEmpty(favoriteCategories)
     );
   }
 
@@ -88,9 +107,12 @@ export class SuggestionService {
     userId: string,
   ): Promise<SuggestionResult> {
     try {
-      await this.asyncInit(userId);
+      const userData = await this.asyncInit(userId);
+      logger(`Suggestion generation for user: ${userId} started.`, {
+        ...userData,
+      });
 
-      if (this.userDataNotValid()) {
+      if (this.userDataNotValid(userData)) {
         const llmSuggestions = await this.llmService.getGenericSuggestions(
           [] as string[],
         );
@@ -125,20 +147,15 @@ export class SuggestionService {
           ),
         };
 
-        logger('books: ', books);
         const final = books.items ?? [];
-
-        if (isNotEmpty(final)) {
-          await this.userService.toggleFreshness(this.user.id);
-        }
-
-        return {
-          relevance: Relevance.BAD,
+        return this.finalizeAndReturn({
+          relevance: Relevance.MEDIOCRE,
           books: final,
-        };
+          userId,
+        });
       }
 
-      if (this.user.suggestionIsFresh) {
+      if (userData.user.suggestionIsFresh) {
         const alreadySuggestedRecords =
           await this.bookRecordService.getRecordsOfTypeForUser(
             userId,
@@ -158,37 +175,41 @@ export class SuggestionService {
         };
       }
 
-      const categoryAuthorCombination =
-        await this.getAuthorCategoryCombination();
+      const categoryAuthorCombination = await this.getAuthorCategoryCombination(
+        userData.favoriteCategoriesFromBooks,
+        userData.favoriteCategories,
+        userData.favoriteAuthors,
+        userData.dislikes,
+      );
 
-      if (categoryAuthorCombination.books.length) {
-        await this.saveSuggestion(userId, categoryAuthorCombination.books);
-        await this.userService.toggleFreshness(userId);
-        return categoryAuthorCombination;
+      if (isNotEmpty(categoryAuthorCombination)) {
+        return this.finalizeAndReturn({ ...categoryAuthorCombination, userId });
       }
 
-      const categoryOverloaded = await this.progressiveCategoryOverload();
+      const categoryOverloaded = await this.progressiveCategoryOverload(
+        userData.favoriteCategoriesFromBooks,
+        userData.favoriteCategories,
+        userData.dislikes,
+      );
 
-      if (categoryOverloaded.books.length) {
-        await this.saveSuggestion(userId, categoryOverloaded.books);
-        await this.userService.toggleFreshness(userId);
-        return categoryOverloaded;
+      if (isNotEmpty(categoryOverloaded)) {
+        return this.finalizeAndReturn({ ...categoryOverloaded, userId });
       }
 
-      const authorSuggestions = await this.getAuthorSuggestions();
+      const authorSuggestions = await this.getAuthorSuggestions(
+        userData.favoriteAuthors,
+      );
 
-      if (authorSuggestions.books.length) {
-        await this.saveSuggestion(userId, authorSuggestions.books);
-        await this.userService.toggleFreshness(userId);
-        return authorSuggestions;
+      if (isNotEmpty(authorSuggestions)) {
+        return this.finalizeAndReturn({ ...authorSuggestions, userId });
       }
 
-      const publisherSuggestions = await this.getPublisherSuggestions();
+      const publisherSuggestions = await this.getPublisherSuggestions(
+        userData.favoritePublishers,
+      );
 
-      if (publisherSuggestions.books.length) {
-        await this.saveSuggestion(userId, publisherSuggestions.books);
-        await this.userService.toggleFreshness(userId);
-        return publisherSuggestions;
+      if (isNotEmpty(publisherSuggestions)) {
+        return this.finalizeAndReturn({ ...publisherSuggestions, userId });
       }
 
       return {
@@ -196,7 +217,9 @@ export class SuggestionService {
         books: [],
       };
     } catch (generateSuggestionError) {
-      if (isNotNullish(this.user) && this.user.suggestionIsFresh) {
+      const user = await this.userService.get(userId);
+
+      if (isNotNullish(user) && user.suggestionIsFresh) {
         await this.userService.toggleFreshness(userId);
       }
       throw new Error(
@@ -205,8 +228,37 @@ export class SuggestionService {
     }
   }
 
-  private async getPublisherSuggestions(): Promise<SuggestionResult> {
-    const publisherQuery = this.favoritePublishers.map(
+  private async finalizeAndReturn({
+    books,
+    relevance,
+    userId,
+    shouldSave = true,
+  }: SuggestionResult & {
+    userId: string;
+    shouldSave?: boolean;
+  }): Promise<SuggestionResult> {
+    if (isNotEmpty(books)) {
+      if (shouldSave) {
+        await this.saveSuggestion(userId, books);
+      }
+
+      await this.userService.toggleFreshness(userId);
+      return {
+        books,
+        relevance,
+      };
+    }
+
+    return {
+      relevance: Relevance.VERY_BAD,
+      books: [],
+    };
+  }
+
+  private async getPublisherSuggestions(
+    favoritePublishers: UserData['favoritePublishers'],
+  ): Promise<SuggestionResult> {
+    const publisherQuery = favoritePublishers.map(
       (publisher): SearchObject => ({
         term: 'publisher',
         value: publisher,
@@ -220,8 +272,10 @@ export class SuggestionService {
     };
   }
 
-  private async getAuthorSuggestions(): Promise<SuggestionResult> {
-    const authorQueryObj = this.favoriteAuthors.map(
+  private async getAuthorSuggestions(
+    favoriteAuthors: UserData['favoriteAuthors'],
+  ): Promise<SuggestionResult> {
+    const authorQueryObj = favoriteAuthors.map(
       (author): SearchObject => ({
         term: 'authors',
         value: author,
@@ -234,10 +288,14 @@ export class SuggestionService {
     };
   }
 
-  private async progressiveCategoryOverload(): Promise<SuggestionResult> {
+  private async progressiveCategoryOverload(
+    favoriteCategoriesFromBooks: UserData['favoriteCategoriesFromBooks'],
+    favoriteCategories: UserData['favoriteCategories'],
+    dislikes: UserData['dislikes'],
+  ): Promise<SuggestionResult> {
     // In the worst case scenario, we want to fallback to these categories
     // that were extracted from favorite books
-    const singulars = this.favoriteCategoriesFromBooks.map(
+    const singulars = favoriteCategoriesFromBooks.map(
       (category): SearchObject => ({ term: 'subject', value: category }),
     );
 
@@ -245,15 +303,15 @@ export class SuggestionService {
     // than just returning a random book from a singular category
     // combination 1: Combination of favorites categories obtained from user's favorite books
     const combinations1 = this.combineParams(
-      this.favoriteCategoriesFromBooks,
-      this.favoriteCategoriesFromBooks,
+      favoriteCategoriesFromBooks,
+      favoriteCategoriesFromBooks,
     );
 
     // combination 2: Combination of hand created favorite categories from user
     // We go from best to worst in terms of rank
     const favoriteCategoryBests: string[] = [];
     const favoriteCategoryWorsts: string[] = [];
-    this.favoriteCategories.forEach((favoriteCategory): void => {
+    favoriteCategories.forEach((favoriteCategory): void => {
       if (favoriteCategory.rank >= 5) {
         favoriteCategoryBests.push(favoriteCategory.name);
       } else {
@@ -273,34 +331,34 @@ export class SuggestionService {
     // hand created favorites and read book favorites
     // we check if that's possible first, then try to fully go with
     // hand crafted ones if not
-    if (combinations2perfects.length) {
-      if (combinations1.length) {
+    if (isNotEmpty(combinations2perfects)) {
+      if (isNotEmpty(combinations1)) {
         const newCombination = [...combinations1, ...combinations2perfects];
         return {
           relevance: Relevance.PERFECT,
-          books: await this.getChunkedBooks(newCombination),
+          books: await this.getChunkedBooks(newCombination, dislikes),
         };
       }
       return {
         relevance: Relevance.VERY_GOOD,
-        books: await this.getChunkedBooks(combinations2perfects),
+        books: await this.getChunkedBooks(combinations2perfects, dislikes),
       };
-    } else if (combination2Worsts.length) {
-      if (combinations1.length) {
+    } else if (isNotEmpty(combination2Worsts)) {
+      if (isNotEmpty(combinations1)) {
         const newCombination = [...combinations1, ...combination2Worsts];
         return {
           relevance: Relevance.GOOD,
-          books: await this.getChunkedBooks(newCombination),
+          books: await this.getChunkedBooks(newCombination, dislikes),
         };
       }
       return {
         relevance: Relevance.MEDIOCRE,
-        books: await this.getChunkedBooks(combination2Worsts),
+        books: await this.getChunkedBooks(combination2Worsts, dislikes),
       };
-    } else if (combinations1.length) {
+    } else if (isNotEmpty(combinations1)) {
       return {
         relevance: Relevance.MEDIOCRE,
-        books: await this.getChunkedBooks(combinations1),
+        books: await this.getChunkedBooks(combinations1, dislikes),
       };
     }
 
@@ -312,31 +370,37 @@ export class SuggestionService {
     };
   }
 
-  private async getAuthorCategoryCombination(): Promise<SuggestionResult> {
+  private async getAuthorCategoryCombination(
+    favoriteCategoriesFromBooks: UserData['favoriteCategoriesFromBooks'],
+    favoriteCategories: UserData['favoriteCategories'],
+    favoriteAuthors: UserData['favoriteAuthors'],
+    dislikes: UserData['dislikes'],
+  ): Promise<SuggestionResult> {
     // in this case, both cases are near perfect suggestions
     // so we can return them like that
-    const favoriteCategoryNames = this.favoriteCategories.map(
+    const favoriteCategoryNames = favoriteCategories.map(
       (category): string => category.name,
     );
     const handCraftedFavoriteAndAuthorCombinations = this.combineParams(
       favoriteCategoryNames,
-      this.favoriteAuthors,
+      favoriteAuthors,
     );
-    if (handCraftedFavoriteAndAuthorCombinations.length) {
+    if (isNotEmpty(handCraftedFavoriteAndAuthorCombinations)) {
       return {
         relevance: Relevance.PERFECT,
         books: await this.getChunkedBooks(
           handCraftedFavoriteAndAuthorCombinations,
+          dislikes,
         ),
       };
     }
     const authorCategoryCombinations = this.combineParams(
-      this.favoriteCategoriesFromBooks,
-      this.favoriteAuthors,
+      favoriteCategoriesFromBooks,
+      favoriteAuthors,
     );
     return {
       relevance: Relevance.PERFECT,
-      books: await this.getChunkedBooks(authorCategoryCombinations),
+      books: await this.getChunkedBooks(authorCategoryCombinations, dislikes),
     };
   }
 
@@ -362,7 +426,10 @@ export class SuggestionService {
     return combinations;
   }
 
-  private async getChunkedBooks(queries: SearchObject[][]): Promise<Book[]> {
+  private async getChunkedBooks(
+    queries: SearchObject[][],
+    dislikes: UserData['dislikes'],
+  ): Promise<Book[]> {
     const bookPromises: Promise<SuccessfulGoogleResponse>[] = [];
     for (const query of queries) {
       bookPromises.push(this.bookService.getVolumes(query));
@@ -374,15 +441,18 @@ export class SuggestionService {
       .filter((record): boolean => record.totalItems > 0)
       .flatMap((responseArr): Book[] => responseArr.items);
 
-    return this.filterOutDislikes(books);
+    return this.filterOutDislikes(books, dislikes);
   }
 
-  private filterOutDislikes(books: Book[]): Book[] {
-    if (!this.dislikes.length) {
+  private filterOutDislikes(
+    books: Book[],
+    dislikes: UserData['dislikes'],
+  ): Book[] {
+    if (isNotEmpty(dislikes)) {
       return books;
     }
 
-    const dislikedBookSelfLinks = this.dislikes.map(
+    const dislikedBookSelfLinks = dislikes.map(
       (dislike): string => dislike.selfLink,
     );
 
