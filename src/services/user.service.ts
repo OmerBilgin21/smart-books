@@ -1,9 +1,8 @@
-import { User } from '../infrastructure/db/entities';
 import { UsersInterface } from '../interfaces/users.interface';
-import { AccessToken, UserCreate } from '../schemas/user';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import envs from '../infrastructure/envs';
+import { User, AccessToken, UserCreate } from '../schemas';
 
 const { SECRET_KEY } = envs;
 export class UserService {
