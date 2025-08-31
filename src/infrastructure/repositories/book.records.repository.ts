@@ -4,6 +4,7 @@ import { BookRecord, User } from '../db/entities/index';
 import { BookRecordType } from '../db/entities/enums';
 import { BookRecordInterface } from '../../interfaces/book.records.interface';
 import { isNotNullish } from '../../utils/general';
+import { logger } from '../../utils/logger';
 
 export class BookRecordsRepository
   extends BaseRepository
@@ -27,11 +28,42 @@ export class BookRecordsRepository
       },
     });
 
+    const creatable: BookRecordCreate[] = [];
+
+    const findCriteria = bookRecords.map(
+      (r): { type: BookRecordType; userId: string; googleId: string } => ({
+        type: r.type,
+        userId: r.userId,
+        googleId: r.googleId,
+      }),
+    );
+
+    const existing = await repo.find({ where: findCriteria });
+
+    const duplicates = existing.reduce(
+      (acc, r): Record<string, BookRecord> => {
+        acc[r.googleId] = r;
+        return acc;
+      },
+      {} as Record<string, BookRecord>,
+    );
+
+    for (const record of bookRecords) {
+      const duplicate = duplicates[record.googleId];
+      if (isNotNullish(duplicate)) {
+        logger('skipped:', { googleId: record.googleId });
+        continue;
+      }
+
+      creatable.push(record);
+    }
+
     if (!user) {
       throw new Error('User not found');
     }
 
-    return repo.save(bookRecords);
+    const created = await repo.save(creatable);
+    return [...created, ...existing];
   }
 
   public async create(bookRecord: BookRecordCreate): Promise<BookRecord> {
