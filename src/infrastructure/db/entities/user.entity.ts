@@ -1,18 +1,10 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  OneToMany,
-  Index,
-} from 'typeorm';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { BookRecord } from './book.record.entity';
 import { FavoriteCategory } from './favorite.category.entity';
+import { CustomBaseEntity } from './base.entity';
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class User extends CustomBaseEntity {
   @Column()
   firstName: string;
 

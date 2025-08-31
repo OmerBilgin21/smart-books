@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
+import { CustomBaseEntity } from './base.entity';
 
 @Entity('favorite_categories')
-export class FavoriteCategory {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class FavoriteCategory extends CustomBaseEntity {
   @Column()
   name: string;
 
