@@ -123,6 +123,7 @@ export class SuggestionService {
       }
 
       const userData = await this.asyncInit(userId);
+
       logger(`Suggestion generation for user: ${userId} started.`, {
         ...userData,
       });
@@ -179,10 +180,9 @@ export class SuggestionService {
           ),
         };
 
-        const final = books.items ?? [];
         return this.finalizeAndReturn({
           relevance: Relevance.MEDIOCRE,
-          books: final,
+          books: books.items ?? [],
           userId,
         });
       }
@@ -382,6 +382,7 @@ export class SuggestionService {
     // We go from best to worst in terms of rank
     const favoriteCategoryBests: string[] = [];
     const favoriteCategoryWorsts: string[] = [];
+
     favoriteCategories.forEach((favoriteCategory): void => {
       if (favoriteCategory.rank >= 5) {
         favoriteCategoryBests.push(favoriteCategory.name);
@@ -389,10 +390,12 @@ export class SuggestionService {
         favoriteCategoryWorsts.push(favoriteCategory.name);
       }
     });
+
     const combinations2perfects = this.combineParams(
       favoriteCategoryBests,
       favoriteCategoryBests,
     );
+
     const combination2Worsts = this.combineParams(
       favoriteCategoryBests,
       favoriteCategoryWorsts,
@@ -410,6 +413,7 @@ export class SuggestionService {
           books: await this.getChunkedBooks(newCombination, dislikes),
         };
       }
+
       return {
         relevance: Relevance.VERY_GOOD,
         books: await this.getChunkedBooks(combinations2perfects, dislikes),
@@ -422,6 +426,7 @@ export class SuggestionService {
           books: await this.getChunkedBooks(newCombination, dislikes),
         };
       }
+
       return {
         relevance: Relevance.MEDIOCRE,
         books: await this.getChunkedBooks(combination2Worsts, dislikes),
@@ -459,10 +464,12 @@ export class SuggestionService {
     const favoriteCategoryNames = favoriteCategories.map(
       (category): string => category.name,
     );
+
     const handCraftedFavoriteAndAuthorCombinations = this.combineParams(
       favoriteCategoryNames,
       favoriteAuthors,
     );
+
     if (isNotEmpty(handCraftedFavoriteAndAuthorCombinations)) {
       return {
         relevance: Relevance.PERFECT,
@@ -472,10 +479,12 @@ export class SuggestionService {
         ),
       };
     }
+
     const authorCategoryCombinations = this.combineParams(
       favoriteCategoriesFromBooks,
       favoriteAuthors,
     );
+
     return {
       relevance: Relevance.PERFECT,
       books: await this.getChunkedBooks(authorCategoryCombinations, dislikes),
@@ -494,10 +503,12 @@ export class SuggestionService {
           term: 'authors',
           value: author,
         };
+
         const categoryQuery: SearchObject = {
           term: 'subject',
           value: category,
         };
+
         combinations.push([authorQuery, categoryQuery]);
       }
     }
@@ -509,6 +520,7 @@ export class SuggestionService {
     dislikes: UserData['dislikes'],
   ): Promise<Book[]> {
     const bookPromises: Promise<SuccessfulGoogleResponse>[] = [];
+
     for (const query of queries) {
       bookPromises.push(this.bookService.getVolumes(query));
     }
