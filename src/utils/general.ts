@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export const delay = (s: number): Promise<unknown> =>
   new Promise((resolve): NodeJS.Timeout => setTimeout(resolve, s * 1000));
 
@@ -39,5 +41,28 @@ export const gracefullyStringfy = <T>(param: T): string | T => {
     return JSON.stringify(param, null, 2);
   } catch {
     return param;
+  }
+};
+
+export const processAsyncTaskInBatch = async <T>(
+  promises: Promise<T>[],
+  batchSize: number,
+): Promise<T[]> => {
+  try {
+    const results: T[] = [];
+    for (let i = 0; i < promises.length; i += batchSize) {
+      const batch = promises.slice(i, i + batchSize);
+
+      const batchResults = await Promise.all(batch);
+      results.push(...batchResults);
+
+      if (i + batchSize < promises.length) {
+        await delay(1);
+      }
+    }
+    return results;
+  } catch (error) {
+    logger('Error while executing async tasks in bulk', error);
+    return [];
   }
 };
