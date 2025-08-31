@@ -13,5 +13,9 @@ export const BookRecordCreateSchema = BookRecordSchema.omit({
   id: true,
 });
 
+export const BookRecordParamsSchema = z.object({
+  userId: z.uuid(),
+});
+
 export type BookRecord = z.infer<typeof BookRecordSchema>;
 export type BookRecordCreate = z.infer<typeof BookRecordCreateSchema>;
