@@ -1,22 +1,23 @@
 import { BaseRepository } from './base.repository';
-import { User } from '../db/entities/index';
-import { UserCreate } from '../../schemas/user';
+import { User as UserEntity } from '../db/entities/index';
+import { UserCreate, User } from '../../schemas';
 
 import { UsersInterface } from '../../interfaces/users.interface';
 import { FindOptionsWhere } from 'typeorm';
 import { validate } from 'uuid';
+import { UserMapper } from '../mappers/user.mapper';
 
 export class UsersRepository extends BaseRepository implements UsersInterface {
   public async create(user: UserCreate): Promise<User> {
-    const repo = await this.getRepository(User);
-
-    return repo.save(user);
+    const repo = await this.getRepository(UserEntity);
+    const savedEntity = await repo.save(user);
+    return UserMapper.entityToSchema(savedEntity);
   }
 
   public async get(identifier: string): Promise<User> {
-    const repo = await this.getRepository(User);
+    const repo = await this.getRepository(UserEntity);
 
-    const whereCondition: FindOptionsWhere<User> = {
+    const whereCondition: FindOptionsWhere<UserEntity> = {
       ...(validate(identifier) ? { id: identifier } : { email: identifier }),
     };
 
@@ -29,15 +30,24 @@ export class UsersRepository extends BaseRepository implements UsersInterface {
       throw new Error('User not found');
     }
 
-    return user;
+    return UserMapper.entityToSchema(user);
   }
 
   public async toggleFreshness(identifier: string): Promise<User> {
-    const repo = await this.getRepository(User);
-    const user = await this.get(identifier);
-    return repo.save({
-      ...user,
-      suggestionIsFresh: !user.suggestionIsFresh,
+    const repo = await this.getRepository(UserEntity);
+    const userEntity = await repo.findOne({
+      where: validate(identifier) ? { id: identifier } : { email: identifier },
     });
+
+    if (!userEntity) {
+      throw new Error('User not found');
+    }
+
+    const updatedEntity = await repo.save({
+      ...userEntity,
+      suggestionIsFresh: !userEntity.suggestionIsFresh,
+    });
+
+    return UserMapper.entityToSchema(updatedEntity);
   }
 }
